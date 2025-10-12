@@ -125,7 +125,6 @@ function App() {
     setCustomGames({});
   };
 
-
   const addCustomGame = (exampleIdx: number) => {
     setCustomGames(prev => ({
       ...prev,
