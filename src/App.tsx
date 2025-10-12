@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface Player {
   name: string;
@@ -125,13 +125,6 @@ function App() {
     setCustomGames({});
   };
 
-  const updateScore = (exampleIdx: number, team1Idx: number, team2Idx: number, score1: number, score2: number) => {
-    const key = `${exampleIdx}-${team1Idx}-${team2Idx}`;
-    setScores(prev => ({
-      ...prev,
-      [key]: { score1, score2 }
-    }));
-  };
 
   const addCustomGame = (exampleIdx: number) => {
     setCustomGames(prev => ({
