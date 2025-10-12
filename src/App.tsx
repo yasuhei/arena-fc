@@ -104,7 +104,7 @@ function App() {
   const [teams, setTeams] = useState<Player[][][]>([]);
   const [scores, setScores] = useState<{[key: string]: {[key: string]: number}}>({});
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
-  const [customGames, setCustomGames] = useState<{[key: number]: Array<{team1: number, team2: number, score1: number, score2: number}>}>({});
+  const [customGames, setCustomGames] = useState<{[key: number]: Array<{team1: number, team2: number, score1: number, score2: number, confirmed: boolean}>}>({});
 
   const handleCheck = (name: string, checked: boolean) => {
     const newSelected = new Set(selected);
@@ -129,7 +129,7 @@ function App() {
   const addCustomGame = (exampleIdx: number) => {
     setCustomGames(prev => ({
       ...prev,
-      [exampleIdx]: [...(prev[exampleIdx] || []), { team1: 0, team2: 1, score1: 0, score2: 0 }]
+      [exampleIdx]: [...(prev[exampleIdx] || []), { team1: 0, team2: 1, score1: 0, score2: 0, confirmed: false }]
     }));
   };
 
@@ -138,6 +138,15 @@ function App() {
       ...prev,
       [exampleIdx]: prev[exampleIdx].map((game, idx) => 
         idx === gameIdx ? { ...game, [field]: value } : game
+      )
+    }));
+  };
+
+  const confirmGame = (exampleIdx: number, gameIdx: number) => {
+    setCustomGames(prev => ({
+      ...prev,
+      [exampleIdx]: prev[exampleIdx].map((game, idx) => 
+        idx === gameIdx ? { ...game, confirmed: true } : game
       )
     }));
   };
@@ -291,17 +300,7 @@ function App() {
                                 ))}
                               </ul>
                               <div className="mt-1 text-center">
-                                <span className="text-xs text-gray-600">
-                                  {team.length}j | A:{team.filter(p => p.level === 'A').length}
-                                </span>
                               </div>
-                              {(result.wins + result.draws + result.losses) > 0 && (
-                                <div className="mt-1 text-center bg-white rounded px-1 py-0.5">
-                                  <span className="text-xs font-bold text-green-600">V:{result.wins}</span>
-                                  <span className="text-xs font-bold text-yellow-600 mx-1">E:{result.draws}</span>
-                                  <span className="text-xs font-bold text-red-600">D:{result.losses}</span>
-                                </div>
-                              )}
                             </div>
                           );
                         })}
@@ -323,47 +322,78 @@ function App() {
                                           game.score1 < game.score2 ? `Vitória Time ${game.team2 + 1}` : 
                                           'Empate';
                             return (
-                              <div key={gameIdx} className="flex items-center justify-center space-x-2 bg-white p-2 rounded">
-                                <select 
-                                  className="border rounded px-2 py-1 text-sm"
-                                  value={game.team1}
-                                  onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team1', parseInt(e.target.value))}
-                                >
-                                  {example.map((_, tIdx) => (
-                                    <option key={tIdx} value={tIdx}>Time {tIdx + 1}</option>
-                                  ))}
-                                </select>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  className="w-12 text-center border rounded px-1 py-1 text-sm"
-                                  value={game.score1}
-                                  onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score1', parseInt(e.target.value) || 0)}
-                                />
-                                <span className="text-sm">x</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  className="w-12 text-center border rounded px-1 py-1 text-sm"
-                                  value={game.score2}
-                                  onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score2', parseInt(e.target.value) || 0)}
-                                />
-                                <select 
-                                  className="border rounded px-2 py-1 text-sm"
-                                  value={game.team2}
-                                  onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team2', parseInt(e.target.value))}
-                                >
-                                  {example.map((_, tIdx) => (
-                                    <option key={tIdx} value={tIdx}>Time {tIdx + 1}</option>
-                                  ))}
-                                </select>
-                                <span className={`text-xs font-bold px-2 py-1 rounded ${
-                                  game.score1 > game.score2 ? 'bg-green-100 text-green-800' :
-                                  game.score1 < game.score2 ? 'bg-red-100 text-red-800' :
-                                  'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {result}
-                                </span>
+                              <div key={gameIdx} className="bg-white p-2 rounded">
+                                <div className="flex items-center justify-center space-x-1 md:space-x-2 mb-2">
+                                  <select 
+                                    className="border rounded px-1 md:px-2 py-1 text-xs md:text-sm"
+                                    value={game.team1}
+                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team1', parseInt(e.target.value))}
+                                    disabled={game.confirmed}
+                                  >
+                                    {example.map((_, tIdx) => (
+                                      <option key={tIdx} value={tIdx}>Time {tIdx + 1}</option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-8 md:w-12 text-center border rounded px-1 py-1 text-xs md:text-sm"
+                                    value={game.score1}
+                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score1', parseInt(e.target.value) || 0)}
+                                    disabled={game.confirmed}
+                                  />
+                                  <span className="text-xs md:text-sm">x</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-8 md:w-12 text-center border rounded px-1 py-1 text-xs md:text-sm"
+                                    value={game.score2}
+                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score2', parseInt(e.target.value) || 0)}
+                                    disabled={game.confirmed}
+                                  />
+                                  <select 
+                                    className="border rounded px-1 md:px-2 py-1 text-xs md:text-sm"
+                                    value={game.team2}
+                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team2', parseInt(e.target.value))}
+                                    disabled={game.confirmed}
+                                  >
+                                    {example.map((_, tIdx) => (
+                                      <option key={tIdx} value={tIdx}>Time {tIdx + 1}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                
+                                {!game.confirmed ? (
+                                  <div className="flex justify-center">
+                                    <button 
+                                      onClick={() => confirmGame(selectedExample, gameIdx)}
+                                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-semibold"
+                                    >
+                                      ✓ Confirmar Resultado
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center space-y-1">
+                                    <span className={`text-xs font-bold px-2 py-1 rounded ${
+                                      game.score1 > game.score2 ? 'bg-green-100 text-green-800' :
+                                      game.score1 < game.score2 ? 'bg-red-100 text-red-800' :
+                                      'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                      {result}
+                                    </span>
+                                    <div className="text-xs text-gray-600 flex space-x-3">
+                                      <span className="text-green-600 font-semibold">V: {
+                                        game.score1 > game.score2 ? '1' : game.score1 < game.score2 ? '0' : '0'
+                                      }</span>
+                                      <span className="text-yellow-600 font-semibold">E: {
+                                        game.score1 === game.score2 ? '1' : '0'
+                                      }</span>
+                                      <span className="text-red-600 font-semibold">D: {
+                                        game.score1 < game.score2 ? '1' : game.score1 > game.score2 ? '0' : '0'
+                                      }</span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
