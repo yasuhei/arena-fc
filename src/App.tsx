@@ -102,7 +102,6 @@ function createBalancedTeams(selected: Set<string>): Player[][] {
 function App() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [teams, setTeams] = useState<Player[][][]>([]);
-  const [scores, setScores] = useState<{[key: string]: {[key: string]: number}}>({});
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
   const [customGames, setCustomGames] = useState<{[key: number]: Array<{team1: number, team2: number, score1: number, score2: number, confirmed: boolean}>}>({});
 
@@ -120,7 +119,6 @@ function App() {
       examples.push(teamExample);
     }
     setTeams(examples);
-    setScores({});
     setSelectedExample(null);
     setCustomGames({});
   };
@@ -150,38 +148,7 @@ function App() {
     }));
   };
 
-  const getTeamResult = (exampleIdx: number, teamIdx: number) => {
-    const teamGames = Object.entries(scores).filter(([key]) => key.startsWith(`${exampleIdx}-`));
-    const customGamesList = customGames[exampleIdx] || [];
-    let wins = 0, draws = 0, losses = 0;
-    
-    teamGames.forEach(([key, scores]) => {
-      const [, t1, t2] = key.split('-').map(Number);
-      if (t1 === teamIdx || t2 === teamIdx) {
-        const isTeam1 = t1 === teamIdx;
-        const teamScore = isTeam1 ? scores.score1 : scores.score2;
-        const oppScore = isTeam1 ? scores.score2 : scores.score1;
-        
-        if (teamScore > oppScore) wins++;
-        else if (teamScore === oppScore) draws++;
-        else losses++;
-      }
-    });
 
-    customGamesList.forEach(game => {
-      if (game.team1 === teamIdx || game.team2 === teamIdx) {
-        const isTeam1 = game.team1 === teamIdx;
-        const teamScore = isTeam1 ? game.score1 : game.score2;
-        const oppScore = isTeam1 ? game.score2 : game.score1;
-        
-        if (teamScore > oppScore) wins++;
-        else if (teamScore === oppScore) draws++;
-        else losses++;
-      }
-    });
-    
-    return { wins, draws, losses };
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700">
@@ -282,7 +249,6 @@ function App() {
                       </h3>
                       <div className="flex space-x-1 overflow-x-auto pb-2 justify-center mb-6">
                         {example.map((team, tIdx) => {
-                          const result = getTeamResult(selectedExample, tIdx);
                           return (
                             <div key={tIdx} className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 rounded-lg p-0.5 shadow-lg hover:shadow-xl transition-shadow flex-shrink-0 w-24 md:w-32">
                               <h4 className="font-bold text-xs mb-1 text-center text-green-800 bg-white py-0.5 rounded">
