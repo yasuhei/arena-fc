@@ -38,25 +38,29 @@ function createBalancedTeams(selected: Set<string>): Player[][] {
   if (total < 6) return [];
 
   let teamSize = 6;
-  let numTeams = Math.min(4, Math.floor(total / teamSize));
+  let numTeams = 2;
 
-  if (total < 18) {
-    teamSize = 5;
-    if (total === 15) {
-      numTeams = 3;
-    } else if (total >= 13 && total <= 17) {
-      numTeams = 3; // 2 times de 5 + 1 com resto
-    } else {
-      numTeams = Math.floor(total / 5);
-    }
-  } else if (total > 18) {
+  // Lógica baseada no total de jogadores
+  if (total === 12) {
+    // 12 pessoas: 2 times com 6
+    numTeams = 2;
     teamSize = 6;
-    numTeams = Math.floor(total / 6);
-    if (total % 6 !== 0) numTeams += 1; // time com resto
-  } else {
-    // 18: 3 times de 6
+  } else if (total >= 13 && total <= 14) {
+    // 13-14 pessoas: 2 times completos (6) + 1 time com resto
     numTeams = 3;
     teamSize = 6;
+  } else if (total === 15) {
+    // 15 pessoas: 3 times com 5
+    numTeams = 3;
+    teamSize = 5;
+  } else if (total > 15) {
+    // Mais de 15: 3 times com 6 (ou mais se necessário)
+    numTeams = 3;
+    teamSize = Math.ceil(total / 3);
+  } else if (total >= 6 && total <= 11) {
+    // 6-11 pessoas: 2 times, distribuindo o mais equilibrado possível
+    numTeams = 2;
+    teamSize = Math.ceil(total / 2);
   }
 
   const teams: Player[][] = Array.from({ length: numTeams }, () => []);
@@ -81,17 +85,21 @@ function createBalancedTeams(selected: Set<string>): Player[][] {
     [shuffledOthers[i], shuffledOthers[j]] = [shuffledOthers[j], shuffledOthers[i]];
   }
 
-  // Distribuir restantes
-  let currentTeam = 0;
+  // Distribuir restantes de forma mais equilibrada
   for (const player of shuffledOthers) {
-    if (currentTeam < numTeams - 1 && teams[currentTeam].length < teamSize) {
-      teams[currentTeam].push(player);
-    } else if (currentTeam === numTeams - 1) {
-      teams[currentTeam].push(player);
+    // Encontrar o time com menos jogadores
+    let minSize = Math.min(...teams.map(t => t.length));
+    let targetTeam = teams.findIndex(t => t.length === minSize);
+    
+    if (targetTeam !== -1 && teams[targetTeam].length < teamSize) {
+      teams[targetTeam].push(player);
     } else {
-      currentTeam++;
-      if (currentTeam < numTeams) {
-        teams[currentTeam].push(player);
+      // Se todos os times atingiram o limite, adicionar ao primeiro time disponível
+      for (let i = 0; i < numTeams; i++) {
+        if (teams[i].length < teamSize) {
+          teams[i].push(player);
+          break;
+        }
       }
     }
   }
@@ -172,11 +180,18 @@ function App() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
             {players.map(player => (
-              <div key={player.name} className="bg-green-50 border border-green-200 rounded-lg p-2 md:p-4 flex items-center space-x-2 md:space-x-3 hover:bg-green-100 transition-colors">
+              <div 
+                key={player.name} 
+                className="bg-green-50 border border-green-200 rounded-lg p-2 md:p-4 flex items-center space-x-2 md:space-x-3 hover:bg-green-100 transition-colors cursor-pointer"
+                onClick={() => handleCheck(player.name, !selected.has(player.name))}
+              >
                 <input
                   type="checkbox"
                   checked={selected.has(player.name)}
-                  onChange={(e) => handleCheck(player.name, e.target.checked)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    handleCheck(player.name, e.target.checked);
+                  }}
                   className="form-checkbox h-4 w-4 md:h-5 md:w-5 text-green-600 focus:ring-green-500"
                 />
                 <div className="flex-1 min-w-0">
