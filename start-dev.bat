@@ -1,5 +1,5 @@
 @echo off
-echo Iniciando Arena FC - Frontend e Backend
+echo Iniciando Sem panela FC - Frontend e Backend
 echo.
 
 echo Iniciando Backend na porta 3001...

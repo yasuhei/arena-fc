@@ -1,4 +1,4 @@
-# 🚀 Guia de Deploy - Arena FC
+# 🚀 Guia de Deploy - Sem panela FC
 
 ## 📋 Situação Atual
 - ✅ **Frontend**: Já deployado na Vercel

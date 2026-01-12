@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { usePlayers, Player } from './hooks/usePlayers';
 import { PlayerManager } from './components/PlayerManager';
+import AdBanner from './components/AdBanner';
+import AdSenseScript from './components/AdSenseScript';
+import { ADSENSE_CONFIG } from './config/adsense';
 
 // Função para renderizar estrelas com meio ponto
 const renderStars = (rating: number, size: string = 'text-lg') => {
@@ -176,13 +179,25 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700">
+      <AdSenseScript />
+      
       <header className="bg-green-800 text-white p-6 text-center shadow-lg">
         <h1 className="text-4xl font-bold flex items-center justify-center space-x-2">
           <span>🏆</span>
-          <span>Arena FC</span>
+          <span>Sem panela FC</span>
           <span>⚽</span>
         </h1>
       </header>
+
+      {/* Banner superior */}
+      <div className="container mx-auto px-6 pt-4">
+        <AdBanner 
+          adSlot={ADSENSE_CONFIG.AD_SLOTS.HEADER_BANNER}
+          adFormat="horizontal"
+          className="mb-4"
+          style={{ minHeight: '90px' }}
+        />
+      </div>
       
       <div className="container mx-auto p-6 max-w-6xl">
         {/* Botão para alternar entre gerenciar e selecionar jogadores */}
@@ -193,6 +208,24 @@ function App() {
           >
             {showManager ? '⚽ Voltar para Seleção' : '⚙️ Gerenciar Jogadores'}
           </button>
+        </div>
+
+        {/* Banner lateral esquerdo */}
+        <div className="hidden lg:block fixed left-4 top-1/2 transform -translate-y-1/2 z-10">
+          <AdBanner 
+            adSlot={ADSENSE_CONFIG.AD_SLOTS.LEFT_SIDEBAR}
+            adFormat="vertical"
+            style={{ width: '160px', minHeight: '600px' }}
+          />
+        </div>
+
+        {/* Banner lateral direito */}
+        <div className="hidden lg:block fixed right-4 top-1/2 transform -translate-y-1/2 z-10">
+          <AdBanner 
+            adSlot={ADSENSE_CONFIG.AD_SLOTS.RIGHT_SIDEBAR}
+            adFormat="vertical"
+            style={{ width: '160px', minHeight: '600px' }}
+          />
         </div>
 
         {showManager ? (
@@ -272,6 +305,16 @@ function App() {
                 ⚽ Montar Times Balanceados ⚽
               </button>
               {selected.size < 6 && <p className="text-yellow-300 mt-2 font-semibold">Selecione pelo menos 5 jogadores para montar times!</p>}
+            </div>
+
+            {/* Banner no meio do conteúdo */}
+            <div className="mb-6">
+              <AdBanner 
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.CONTENT_RECTANGLE}
+                adFormat="rectangle"
+                className="mx-auto"
+                style={{ maxWidth: '336px', minHeight: '280px' }}
+              />
             </div>
           </>
         )}
@@ -458,6 +501,33 @@ function App() {
             )}
           </div>
         )}
+
+        {/* Banner inferior */}
+        <div className="mt-8 mb-4">
+          <AdBanner 
+            adSlot={ADSENSE_CONFIG.AD_SLOTS.FOOTER_BANNER}
+            adFormat="horizontal"
+            className="mx-auto"
+            style={{ minHeight: '90px' }}
+          />
+        </div>
+
+        {/* Rodapé com links importantes */}
+        <footer className="text-center text-white text-sm py-4 border-t border-green-600">
+          <div className="space-x-4">
+            <a 
+              href="/privacy-policy.html" 
+              target="_blank"
+              className="hover:text-yellow-300 underline"
+            >
+              Política de Privacidade
+            </a>
+            <span>•</span>
+            <span>© 2026 Sem panela FC</span>
+            <span>•</span>
+            <span>Feito com ⚽ para amantes do futebol</span>
+          </div>
+        </footer>
       </div>
     </div>
   );

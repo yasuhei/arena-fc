@@ -1,4 +1,4 @@
-# ✅ Deploy Pronto - Arena FC
+# ✅ Deploy Pronto - Sem panela FC
 
 ## 🎯 Status: **PRONTO PARA DEPLOY**
 

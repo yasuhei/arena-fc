@@ -1,4 +1,4 @@
-# Arena FC - Sistema de Gerenciamento de Times
+# Sem panela FC - Sistema de Gerenciamento de Times
 
 Sistema completo para gerenciar jogadores e montar times balanceados de futebol com sistema de avaliação por estrelas.
 

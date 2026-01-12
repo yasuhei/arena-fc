@@ -102,7 +102,7 @@ Vou criar os arquivos otimizados para Railway:
 {
   "name": "arena-fc-backend",
   "version": "1.0.0",
-  "description": "Backend do Arena FC",
+  "description": "Backend do Sem panela FC",
   "main": "server.js",
   "type": "module",
   "scripts": {
