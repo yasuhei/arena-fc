@@ -182,8 +182,8 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700">
       <AdSenseScript />
       
-      <header className="bg-green-800 text-white p-6 text-center shadow-lg">
-        <h1 className="text-4xl font-bold flex items-center justify-center space-x-2">
+      <header className="bg-green-800 text-white p-3 md:p-6 text-center shadow-lg">
+        <h1 className="text-2xl md:text-4xl font-bold flex items-center justify-center space-x-2">
           <span>🏆</span>
           <span>Sem panela FC</span>
           <span>⚽</span>
@@ -191,21 +191,21 @@ function App() {
       </header>
 
       {/* Banner superior */}
-      <div className="container mx-auto px-6 pt-4">
+      <div className="container mx-auto px-3 md:px-6 pt-2 md:pt-4">
         <AdBanner 
           adSlot={ADSENSE_CONFIG.AD_SLOTS.HEADER_BANNER}
           adFormat="horizontal"
-          className="mb-4"
+          className="mb-2 md:mb-4"
           style={{ minHeight: '90px' }}
         />
       </div>
       
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="container mx-auto p-3 md:p-6 max-w-6xl">
         {/* Botão para alternar entre gerenciar e selecionar jogadores */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-4 md:mb-6">
           <button
             onClick={() => setShowManager(!showManager)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 md:py-3 md:px-8 rounded-full text-base md:text-lg shadow-lg transform hover:scale-105 transition-all"
           >
             {showManager ? '⚽ Voltar para Seleção' : '⚙️ Gerenciar Jogadores'}
           </button>
@@ -238,16 +238,16 @@ function App() {
           />
         ) : (
           <>
-            <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold text-green-800">Selecione os Jogadores Participantes</h2>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
-                  <span className="text-2xl">👥</span>
-                  <span className="font-bold text-lg">{selected.size}</span>
-                  <span className="text-sm">selecionados</span>
+            <div className="bg-white rounded-lg shadow-xl p-3 md:p-6 mb-4 md:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4 space-y-2 sm:space-y-0">
+                <h2 className="text-lg md:text-2xl font-semibold text-green-800">Selecione os Jogadores</h2>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 md:px-4 md:py-2 rounded-full shadow-lg flex items-center space-x-2 self-start sm:self-auto">
+                  <span className="text-lg md:text-2xl">👥</span>
+                  <span className="font-bold text-base md:text-lg">{selected.size}</span>
+                  <span className="text-xs md:text-sm">selecionados</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                 {players.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-gray-500">
                     <div className="text-6xl mb-4">⚽</div>
@@ -264,7 +264,7 @@ function App() {
                   players.map(player => (
                     <div 
                       key={player.id} 
-                      className="bg-green-50 border border-green-200 rounded-lg p-2 md:p-4 flex items-center space-x-2 md:space-x-3 hover:bg-green-100 transition-colors cursor-pointer"
+                      className="bg-green-50 border border-green-200 rounded-lg p-2 md:p-3 flex items-center space-x-2 hover:bg-green-100 transition-colors cursor-pointer"
                       onClick={() => handleCheck(player.id, !selected.has(player.id))}
                     >
                       <input
@@ -274,19 +274,19 @@ function App() {
                           e.stopPropagation();
                           handleCheck(player.id, e.target.checked);
                         }}
-                        className="form-checkbox h-4 w-4 md:h-5 md:w-5 text-green-600 focus:ring-green-500"
+                        className="form-checkbox h-4 w-4 text-green-600 focus:ring-green-500 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm md:text-base text-gray-800 truncate">{player.name}</p>
-                        <div className="flex items-center space-x-1">
-                          <p className="text-xs md:text-sm text-gray-600">Nota:</p>
+                        <div className="flex items-center space-x-1 mt-1">
+                          <p className="text-xs text-gray-600">Nota:</p>
                           <div className="flex items-center">
                             {renderStars(player.rating, 'text-xs')}
                             <span className="text-xs font-bold text-gray-700 ml-1">({player.rating})</span>
                           </div>
                         </div>
                       </div>
-                      <span className="text-lg md:text-2xl">⚽</span>
+                      <span className="text-lg flex-shrink-0">⚽</span>
                     </div>
                   ))
                 )}
@@ -297,19 +297,19 @@ function App() {
 
         {!showManager && (
           <>
-            <div className="text-center mb-6">
+            <div className="text-center mb-4 md:mb-6">
               <button 
                 onClick={createTeams} 
-                className="bg-yellow-400 hover:bg-yellow-500 text-green-800 font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all"
+                className="bg-yellow-400 hover:bg-yellow-500 text-green-800 font-bold py-2 px-6 md:py-3 md:px-8 rounded-full text-base md:text-lg shadow-lg transform hover:scale-105 transition-all"
                 disabled={selected.size < 6}
               >
                 ⚽ Montar Times Balanceados ⚽
               </button>
-              {selected.size < 6 && <p className="text-yellow-300 mt-2 font-semibold">Selecione pelo menos 5 jogadores para montar times!</p>}
+              {selected.size < 6 && <p className="text-yellow-300 mt-2 font-semibold text-sm md:text-base">Selecione pelo menos 5 jogadores para montar times!</p>}
             </div>
 
             {/* Banner no meio do conteúdo */}
-            <div className="mb-6">
+            <div className="mb-4 md:mb-6">
               <AdBanner 
                 adSlot={ADSENSE_CONFIG.AD_SLOTS.CONTENT_RECTANGLE}
                 adFormat="rectangle"
@@ -504,7 +504,7 @@ function App() {
         )}
 
         {/* Banner inferior */}
-        <div className="mt-8 mb-4">
+        <div className="mt-6 md:mt-8 mb-3 md:mb-4">
           <AdBanner 
             adSlot={ADSENSE_CONFIG.AD_SLOTS.FOOTER_BANNER}
             adFormat="horizontal"
@@ -514,8 +514,8 @@ function App() {
         </div>
 
         {/* Rodapé com links importantes */}
-        <footer className="text-center text-white text-sm py-4 border-t border-green-600">
-          <div className="space-x-4">
+        <footer className="text-center text-white text-xs md:text-sm py-3 md:py-4 border-t border-green-600">
+          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-4 space-y-1 sm:space-y-0">
             <a 
               href="/privacy-policy.html" 
               target="_blank"
@@ -523,9 +523,9 @@ function App() {
             >
               Política de Privacidade
             </a>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>© 2026 Sem panela FC</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>Feito com ⚽ para amantes do futebol</span>
           </div>
         </footer>

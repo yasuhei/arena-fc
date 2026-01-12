@@ -100,9 +100,9 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-green-800">Gerenciar Jogadores</h2>
+    <div className="bg-white rounded-lg shadow-xl p-3 md:p-6 mb-4 md:mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4 space-y-2 sm:space-y-0">
+        <h2 className="text-lg md:text-2xl font-semibold text-green-800">Gerenciar Jogadores</h2>
         <button
           onClick={() => {
             setShowAddForm(!showAddForm);
@@ -110,7 +110,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
             setNewPlayerName('');
             setNewPlayerRating(3);
           }}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold"
+          className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-semibold text-sm md:text-base"
         >
           {showAddForm ? 'Cancelar' : '+ Adicionar Jogador'}
         </button>
@@ -118,28 +118,28 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
 
       {/* Formulário de adicionar/editar */}
       {(showAddForm || editingPlayer) && (
-        <form onSubmit={editingPlayer ? handleUpdatePlayer : handleAddPlayer} className="bg-green-50 p-4 rounded-lg mb-4">
-          <h3 className="text-lg font-semibold mb-3 text-green-800">
+        <form onSubmit={editingPlayer ? handleUpdatePlayer : handleAddPlayer} className="bg-green-50 p-3 md:p-4 rounded-lg mb-3 md:mb-4">
+          <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-3 text-green-800">
             {editingPlayer ? 'Editar Jogador' : 'Novo Jogador'}
           </h3>
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-end">
+            <div className="flex-1 w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
               <input
                 type="text"
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
                 placeholder="Nome do jogador"
                 required
               />
             </div>
-            <div>
+            <div className="w-full sm:w-auto">
               <label className="block text-sm font-medium text-gray-700 mb-1">Nota (0-5)</label>
               <select
                 value={newPlayerRating}
                 onChange={(e) => setNewPlayerRating(parseFloat(e.target.value))}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
               >
                 <option value={0}>0.0 - Muito Baixa</option>
                 <option value={0.5}>0.5 - Muito Baixa+</option>
