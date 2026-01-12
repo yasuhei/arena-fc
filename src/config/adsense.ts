@@ -1,8 +1,7 @@
 // Configurações do Google AdSense
 export const ADSENSE_CONFIG = {
-    // Substitua pelo seu Publisher ID do Google AdSense
-    // Formato: ca-pub-XXXXXXXXXXXXXXXXX
-    PUBLISHER_ID: 'ca-pub-XXXXXXXXXXXXXXXXX',
+    // Seu Publisher ID do Google AdSense
+    PUBLISHER_ID: 'ca-pub-6004139707069726',
 
     // IDs dos slots de anúncio (você receberá estes do Google AdSense)
     AD_SLOTS: {
@@ -16,7 +15,7 @@ export const ADSENSE_CONFIG = {
     // Configurações de desenvolvimento
     DEVELOPMENT: {
         SHOW_PLACEHOLDERS: true,  // Mostrar placeholders em desenvolvimento
-        LOAD_SCRIPTS: false,      // Não carregar scripts do AdSense em desenvolvimento
+        LOAD_SCRIPTS: true,       // Carregar scripts do AdSense em produção
     }
 };
 

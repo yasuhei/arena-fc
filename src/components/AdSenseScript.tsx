@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import { ADSENSE_CONFIG, isProduction, getAdSenseScriptUrl } from '../config/adsense';
+import { isProduction, getAdSenseScriptUrl } from '../config/adsense';
 
 const AdSenseScript = () => {
   useEffect(() => {
-    // Só carrega em produção e se configurado para carregar
-    if (isProduction() && !ADSENSE_CONFIG.DEVELOPMENT.LOAD_SCRIPTS) {
+    // Carrega em produção
+    if (isProduction()) {
       const script = document.createElement('script');
       script.src = getAdSenseScriptUrl();
       script.async = true;
