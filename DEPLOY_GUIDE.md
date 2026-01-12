@@ -150,7 +150,7 @@ Para produção real com dados persistentes, use Railway ou Render.
 
 ### **Produção (Vercel):**
 - Frontend: https://seu-projeto.vercel.app
-- Backend: https://seu-projeto.vercel.app/api
+- Backend: https://backend-arena-fc.vercel.app/api
 
 ### **Produção (Railway/Render):**
 - Frontend: https://seu-projeto.vercel.app

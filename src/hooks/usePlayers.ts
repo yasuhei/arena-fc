@@ -11,7 +11,7 @@ export interface Player {
 const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
 
 const API_BASE_URL = isProduction
-    ? 'https://backend-arena-fco.vercel.app/api' // Backend na Vercel
+    ? 'https://backend-arena-fc.vercel.app/api' // Backend na Vercel
     : 'http://localhost:3001/api'; // Desenvolvimento local
 
 export const usePlayers = () => {

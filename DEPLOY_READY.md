@@ -52,7 +52,7 @@ Backend:  http://localhost:3001/api
 ### **Produção (Vercel):**
 ```
 Frontend: https://seu-projeto.vercel.app
-Backend:  https://seu-projeto.vercel.app/api
+Backend:  https://backend-arena-fc.vercel.app/api
 ```
 
 ### **Detecção Automática:**
