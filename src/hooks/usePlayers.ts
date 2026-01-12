@@ -7,7 +7,10 @@ export interface Player {
     rating: number; // 0 a 5
 }
 
-const API_BASE_URL = process.env.NODE_ENV === 'production'
+// Detectar se está em produção pela URL
+const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+
+const API_BASE_URL = isProduction
     ? '/api' // Vercel API routes
     : 'http://localhost:3001/api'; // Desenvolvimento local
 
