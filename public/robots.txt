@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://arena-fc.vercel.app/sitemap.xml
+Sitemap: https://sem-panela-fc.vercel.app/sitemap.xml
