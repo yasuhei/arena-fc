@@ -4,7 +4,7 @@ const SessionInfo = () => {
   const sessionId = getSessionId();
   
   // Só mostrar em desenvolvimento
-  if (process.env.NODE_ENV !== 'development') {
+  if (import.meta.env.PROD) {
     return null;
   }
 
