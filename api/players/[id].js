@@ -1,4 +1,4 @@
-import { playerOperations } from '../../backend/database-vercel.js';
+import { playerOperations } from '../../backend/database-simple.js';
 
 // Função para validar rating
 const isValidRating = (rating) => {
@@ -54,6 +54,6 @@ export default function handler(req, res) {
     
   } catch (error) {
     console.error('Erro na API:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 }

@@ -1,4 +1,4 @@
-import { playerOperations } from '../../backend/database-vercel.js';
+import { playerOperations } from '../../backend/database-simple.js';
 
 export default function handler(req, res) {
   // Configurar CORS
@@ -20,6 +20,6 @@ export default function handler(req, res) {
     }
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 }
