@@ -12,25 +12,26 @@ const renderStars = (rating: number, size: string = 'text-lg') => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
   
-  // Estrelas cheias
+  // Estrelas cheias (baseado na parte inteira da nota)
   for (let i = 0; i < fullStars; i++) {
     stars.push(
       <span key={`full-${i}`} className={`${size} text-yellow-500`}>⭐</span>
     );
   }
   
-  // Meia estrela (representada visualmente como estrela cheia, mas com valor decimal)
+  // Meia estrela se tiver decimal (ex: 2.5 = 2 cheias + 1 meia)
   if (hasHalfStar) {
     stars.push(
       <span key="half" className={`${size} text-yellow-400`}>⭐</span>
     );
   }
   
-  // Estrelas vazias
-  const emptyStars = 5 - Math.ceil(rating);
+  // Estrelas vazias para completar até 5
+  const usedStars = fullStars + (hasHalfStar ? 1 : 0);
+  const emptyStars = 5 - usedStars;
   for (let i = 0; i < emptyStars; i++) {
     stars.push(
-      <span key={`empty-${i}`} className={`${size} text-gray-300`}>⭐</span>
+      <span key={`empty-${i}`} className={`${size} text-gray-300`}>☆</span>
     );
   }
   
@@ -179,12 +180,23 @@ function App() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700">
+    <div 
+      className="min-h-screen relative"
+      style={{
+        background: `repeating-linear-gradient(
+          0deg,
+          #22c55e 0px,
+          #22c55e 80px,
+          #16a34a 80px,
+          #16a34a 160px
+        )`
+      }}
+    >
       <AdSenseScript />
       
       <header className="bg-green-800 text-white p-2 md:p-4 text-center shadow-lg">
         <h1 className="text-xl md:text-3xl font-bold flex items-center justify-center space-x-1 md:space-x-2">
-          <span>🏆</span>
+          <span>🥅</span>
           <span>Sem panela FC</span>
           <span>⚽</span>
         </h1>
@@ -200,7 +212,7 @@ function App() {
         />
       </div>
       
-      <div className="container mx-auto p-2 md:p-4 max-w-6xl">
+      <div className="container mx-auto p-2 md:p-4 max-w-6xl relative z-10">
         {/* Botão para alternar entre gerenciar e selecionar jogadores */}
         <div className="text-center mb-2 md:mb-4">
           <button
@@ -238,13 +250,29 @@ function App() {
           />
         ) : (
           <>
-            <div className="bg-white rounded-lg shadow-xl p-2 md:p-4 mb-2 md:mb-4">
+            <div className="bg-white bg-opacity-95 rounded-lg shadow-xl p-2 md:p-4 mb-2 md:mb-4">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 md:mb-3 space-y-1 sm:space-y-0">
                 <h2 className="text-base md:text-xl font-semibold text-green-800">Selecione os Jogadores</h2>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 md:px-3 md:py-1 rounded-full shadow-lg flex items-center space-x-1 self-start sm:self-auto">
-                  <span className="text-sm md:text-lg">👥</span>
-                  <span className="font-bold text-sm md:text-base">{selected.size}</span>
-                  <span className="text-xs">selecionados</span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      if (selected.size === players.length) {
+                        // Se todos estão selecionados, desmarcar todos
+                        setSelected(new Set());
+                      } else {
+                        // Se nem todos estão selecionados, marcar todos
+                        setSelected(new Set(players.map(p => p.id)));
+                      }
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 md:px-3 md:py-1 rounded text-xs md:text-sm font-semibold"
+                  >
+                    {selected.size === players.length ? '❌ Desmarcar Todos' : '✅ Marcar Todos'}
+                  </button>
+                  <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 md:px-3 md:py-1 rounded-full shadow-lg flex items-center space-x-1">
+                    <span className="text-sm md:text-lg">👥</span>
+                    <span className="font-bold text-sm md:text-base">{selected.size}</span>
+                    <span className="text-xs">selecionados</span>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 md:gap-2">
@@ -514,7 +542,7 @@ function App() {
         </div>
 
         {/* Rodapé com links importantes */}
-        <footer className="text-center text-white text-xs py-2 md:py-3 border-t border-green-600">
+        <footer className="text-center text-white text-xs py-2 md:py-3 border-t border-white border-opacity-20 bg-green-800 bg-opacity-80 relative z-10">
           <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-3 space-y-1 sm:space-y-0">
             <a 
               href="/privacy-policy.html" 

@@ -7,28 +7,26 @@ const renderStars = (rating: number, size: string = 'text-lg') => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
   
-  // Estrelas cheias
+  // Estrelas cheias (baseado na parte inteira da nota)
   for (let i = 0; i < fullStars; i++) {
     stars.push(
       <span key={`full-${i}`} className={`${size} text-yellow-500`}>⭐</span>
     );
   }
   
-  // Meia estrela
+  // Meia estrela se tiver decimal (ex: 2.5 = 2 cheias + 1 meia)
   if (hasHalfStar) {
     stars.push(
-      <span key="half" className={`${size} text-yellow-500 relative`}>
-        <span className="absolute inset-0 overflow-hidden w-1/2">⭐</span>
-        <span className="text-gray-300">⭐</span>
-      </span>
+      <span key="half" className={`${size} text-yellow-400`}>⭐</span>
     );
   }
   
-  // Estrelas vazias
-  const emptyStars = 5 - Math.ceil(rating);
+  // Estrelas vazias para completar até 5
+  const usedStars = fullStars + (hasHalfStar ? 1 : 0);
+  const emptyStars = 5 - usedStars;
   for (let i = 0; i < emptyStars; i++) {
     stars.push(
-      <span key={`empty-${i}`} className={`${size} text-gray-300`}>⭐</span>
+      <span key={`empty-${i}`} className={`${size} text-gray-300`}>☆</span>
     );
   }
   
@@ -100,7 +98,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-3 md:p-6 mb-4 md:mb-6">
+    <div className="bg-white bg-opacity-95 rounded-lg shadow-xl p-3 md:p-6 mb-4 md:mb-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4 space-y-2 sm:space-y-0">
         <h2 className="text-lg md:text-2xl font-semibold text-green-800">Gerenciar Jogadores</h2>
         <button
