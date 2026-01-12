@@ -1,15 +1,15 @@
-// Banco de dados em memória simples (sem imports externos)
+// Banco de dados em memória simples
 let players = [];
 
 // Função para validar rating
-const isValidRating = (rating) => {
+function isValidRating(rating) {
   return typeof rating === 'number' && 
          rating >= 0 && 
          rating <= 5 && 
          (rating * 2) % 1 === 0;
-};
+}
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   // Configurar CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -69,4 +69,4 @@ export default function handler(req, res) {
       stack: error.stack 
     });
   }
-}
+};
