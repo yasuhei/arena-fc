@@ -21,7 +21,7 @@ export const ADSENSE_CONFIG = {
 };
 
 // Função para verificar se está em produção
-export const isProduction = () => process.env.NODE_ENV === 'production';
+export const isProduction = () => import.meta.env.PROD;
 
 // Função para obter a URL do script do AdSense
 export const getAdSenseScriptUrl = () =>
