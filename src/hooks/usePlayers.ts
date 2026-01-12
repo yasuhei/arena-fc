@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getSessionId } from '../utils/sessionId';
 
 export interface Player {
     id: string;
@@ -18,12 +19,15 @@ export const usePlayers = () => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [sessionId] = useState(() => getSessionId()); // ID único por navegador
 
-    // Buscar todos os jogadores
+    // Buscar jogadores da sessão atual
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_BASE_URL}/players`);
+            const response = await axios.get(`${API_BASE_URL}/players`, {
+                params: { sessionId }
+            });
             setPlayers(response.data);
             setError(null);
         } catch (err) {
@@ -34,10 +38,14 @@ export const usePlayers = () => {
         }
     };
 
-    // Adicionar novo jogador
+    // Adicionar novo jogador à sessão atual
     const addPlayer = async (name: string, rating: number) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/players`, { name, rating });
+            const response = await axios.post(`${API_BASE_URL}/players`, {
+                name,
+                rating,
+                sessionId
+            });
             setPlayers(prev => [...prev, response.data]);
             return response.data;
         } catch (err) {
@@ -47,10 +55,14 @@ export const usePlayers = () => {
         }
     };
 
-    // Atualizar jogador
+    // Atualizar jogador da sessão atual
     const updatePlayer = async (id: string, name: string, rating: number) => {
         try {
-            const response = await axios.put(`${API_BASE_URL}/players/${id}`, { name, rating });
+            const response = await axios.put(`${API_BASE_URL}/players/${id}`, {
+                name,
+                rating,
+                sessionId
+            });
             setPlayers(prev => prev.map(p => p.id === id ? response.data : p));
             return response.data;
         } catch (err) {
@@ -60,10 +72,12 @@ export const usePlayers = () => {
         }
     };
 
-    // Remover jogador
+    // Remover jogador da sessão atual
     const removePlayer = async (id: string) => {
         try {
-            await axios.delete(`${API_BASE_URL}/players/${id}`);
+            await axios.delete(`${API_BASE_URL}/players/${id}`, {
+                params: { sessionId }
+            });
             setPlayers(prev => prev.filter(p => p.id !== id));
         } catch (err) {
             setError('Erro ao remover jogador');
@@ -74,7 +88,7 @@ export const usePlayers = () => {
 
     useEffect(() => {
         fetchPlayers();
-    }, []);
+    }, [sessionId]);
 
     return {
         players,
@@ -83,6 +97,7 @@ export const usePlayers = () => {
         addPlayer,
         updatePlayer,
         removePlayer,
-        refetch: fetchPlayers
+        refetch: fetchPlayers,
+        sessionId // Expor sessionId para debug se necessário
     };
 };

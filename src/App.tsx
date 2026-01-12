@@ -3,6 +3,7 @@ import { usePlayers, Player } from './hooks/usePlayers';
 import { PlayerManager } from './components/PlayerManager';
 import AdBanner from './components/AdBanner';
 import AdSenseScript from './components/AdSenseScript';
+import SessionInfo from './components/SessionInfo';
 import { ADSENSE_CONFIG } from './config/adsense';
 
 // Função para renderizar estrelas com meio ponto
@@ -529,6 +530,9 @@ function App() {
           </div>
         </footer>
       </div>
+      
+      {/* Informações da sessão (só em desenvolvimento) */}
+      <SessionInfo />
     </div>
   );
 }
