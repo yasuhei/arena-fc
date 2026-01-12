@@ -1,39 +1,40 @@
 import { useState } from 'react';
+import { usePlayers, Player } from './hooks/usePlayers';
+import { PlayerManager } from './components/PlayerManager';
 
-interface Player {
-  name: string;
-  level: 'A' | 'B' | 'C';
-}
+// Função para renderizar estrelas com meio ponto
+const renderStars = (rating: number, size: string = 'text-lg') => {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+  
+  // Estrelas cheias
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(
+      <span key={`full-${i}`} className={`${size} text-yellow-500`}>⭐</span>
+    );
+  }
+  
+  // Meia estrela (representada visualmente como estrela cheia, mas com valor decimal)
+  if (hasHalfStar) {
+    stars.push(
+      <span key="half" className={`${size} text-yellow-400`}>⭐</span>
+    );
+  }
+  
+  // Estrelas vazias
+  const emptyStars = 5 - Math.ceil(rating);
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(
+      <span key={`empty-${i}`} className={`${size} text-gray-300`}>⭐</span>
+    );
+  }
+  
+  return stars;
+};
 
-const players: Player[] = [
-  { name: 'João Silva', level: 'A' },
-  { name: 'Maria Santos', level: 'B' },
-  { name: 'Pedro Oliveira', level: 'C' },
-  { name: 'Ana Costa', level: 'A' },
-  { name: 'Carlos Pereira', level: 'B' },
-  { name: 'Beatriz Lima', level: 'C' },
-  { name: 'Lucas Rocha', level: 'A' },
-  { name: 'Fernanda Alves', level: 'B' },
-  { name: 'Rafael Gomes', level: 'C' },
-  { name: 'Juliana Ferreira', level: 'A' },
-  { name: 'Thiago Martins', level: 'B' },
-  { name: 'Camila Souza', level: 'C' },
-  { name: 'Bruno Carvalho', level: 'A' },
-  { name: 'Patrícia Rodrigues', level: 'B' },
-  { name: 'Gustavo Mendes', level: 'C' },
-  { name: 'Isabela Barbosa', level: 'A' },
-  { name: 'Felipe Dias', level: 'B' },
-  { name: 'Larissa Nunes', level: 'C' },
-  { name: 'Diego Ribeiro', level: 'A' },
-  { name: 'Vanessa Cardoso', level: 'B' },
-  { name: 'Roberto Pinto', level: 'C' },
-  { name: 'Sofia Moreira', level: 'A' },
-  { name: 'Leonardo Castro', level: 'B' },
-  { name: 'Amanda Vieira', level: 'C' },
-];
-
-function createBalancedTeams(selected: Set<string>): Player[][] {
-  const available = players.filter(p => selected.has(p.name));
+function createBalancedTeams(selected: Set<string>, players: Player[]): Player[][] {
+  const available = players.filter(p => selected.has(p.id));
   const total = available.length;
   if (total < 6) return [];
 
@@ -42,65 +43,58 @@ function createBalancedTeams(selected: Set<string>): Player[][] {
 
   // Lógica baseada no total de jogadores
   if (total === 12) {
-    // 12 pessoas: 2 times com 6
     numTeams = 2;
     teamSize = 6;
   } else if (total >= 13 && total <= 14) {
-    // 13-14 pessoas: 2 times completos (6) + 1 time com resto
     numTeams = 3;
     teamSize = 6;
   } else if (total === 15) {
-    // 15 pessoas: 3 times com 5
     numTeams = 3;
     teamSize = 5;
   } else if (total > 15) {
-    // Mais de 15: 3 times com 6 (ou mais se necessário)
     numTeams = 3;
     teamSize = Math.ceil(total / 3);
   } else if (total >= 6 && total <= 11) {
-    // 6-11 pessoas: 2 times, distribuindo o mais equilibrado possível
     numTeams = 2;
     teamSize = Math.ceil(total / 2);
   }
 
   const teams: Player[][] = Array.from({ length: numTeams }, () => []);
 
-  // Separar por nível
-  const aPlayers = available.filter(p => p.level === 'A');
-  const otherPlayers = available.filter(p => p.level !== 'A');
+  // Ordenar jogadores por nota (do maior para o menor)
+  const sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
 
-  // Distribuir A's: máximo 2 por time
-  let teamIndex = 0;
-  for (const player of aPlayers) {
-    if (teams[teamIndex].filter(p => p.level === 'A').length < 2) {
-      teams[teamIndex].push(player);
-    }
-    teamIndex = (teamIndex + 1) % numTeams;
-  }
-
-  // Embaralhar outros jogadores
-  const shuffledOthers = [...otherPlayers];
-  for (let i = shuffledOthers.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledOthers[i], shuffledOthers[j]] = [shuffledOthers[j], shuffledOthers[i]];
-  }
-
-  // Distribuir restantes de forma mais equilibrada
-  for (const player of shuffledOthers) {
-    // Encontrar o time com menos jogadores
-    let minSize = Math.min(...teams.map(t => t.length));
-    let targetTeam = teams.findIndex(t => t.length === minSize);
+  // Distribuir jogadores de forma balanceada
+  // Algoritmo: sempre adicionar ao time com menor soma de notas
+  for (const player of sortedPlayers) {
+    // Calcular soma das notas de cada time
+    const teamSums = teams.map(team => 
+      team.reduce((sum, p) => sum + p.rating, 0)
+    );
     
-    if (targetTeam !== -1 && teams[targetTeam].length < teamSize) {
-      teams[targetTeam].push(player);
-    } else {
-      // Se todos os times atingiram o limite, adicionar ao primeiro time disponível
+    // Encontrar o time com menor soma que ainda tem espaço
+    let targetTeamIndex = -1;
+    let minSum = Infinity;
+    
+    for (let i = 0; i < numTeams; i++) {
+      if (teams[i].length < teamSize && teamSums[i] < minSum) {
+        minSum = teamSums[i];
+        targetTeamIndex = i;
+      }
+    }
+    
+    // Se todos os times estão cheios, adicionar ao primeiro disponível
+    if (targetTeamIndex === -1) {
       for (let i = 0; i < numTeams; i++) {
         if (teams[i].length < teamSize) {
-          teams[i].push(player);
+          targetTeamIndex = i;
           break;
         }
       }
+    }
+    
+    if (targetTeamIndex !== -1) {
+      teams[targetTeamIndex].push(player);
     }
   }
 
@@ -108,22 +102,24 @@ function createBalancedTeams(selected: Set<string>): Player[][] {
 }
 
 function App() {
+  const { players, loading, error, addPlayer, updatePlayer, removePlayer } = usePlayers();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [teams, setTeams] = useState<Player[][][]>([]);
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
   const [customGames, setCustomGames] = useState<{[key: number]: Array<{team1: number, team2: number, score1: number, score2: number, confirmed: boolean}>}>({});
+  const [showManager, setShowManager] = useState(false);
 
-  const handleCheck = (name: string, checked: boolean) => {
+  const handleCheck = (playerId: string, checked: boolean) => {
     const newSelected = new Set(selected);
-    if (checked) newSelected.add(name);
-    else newSelected.delete(name);
+    if (checked) newSelected.add(playerId);
+    else newSelected.delete(playerId);
     setSelected(newSelected);
   };
 
   const createTeams = () => {
     const examples: Player[][][] = [];
     for (let i = 0; i < 3; i++) {
-      const teamExample = createBalancedTeams(selected);
+      const teamExample = createBalancedTeams(selected, players);
       examples.push(teamExample);
     }
     setTeams(examples);
@@ -156,6 +152,26 @@ function App() {
     }));
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700 flex items-center justify-center">
+        <div className="text-white text-2xl font-bold">Carregando jogadores...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-red-500 to-red-700 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="text-2xl font-bold mb-4">Erro ao conectar com o servidor</div>
+          <div className="text-lg">{error}</div>
+          <div className="text-sm mt-4">Certifique-se de que o backend está rodando na porta 3001</div>
+        </div>
+      </div>
+    );
+  }
+
 
 
   return (
@@ -169,57 +185,98 @@ function App() {
       </header>
       
       <div className="container mx-auto p-6 max-w-6xl">
-        <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-green-800">Selecione os Jogadores Participantes</h2>
-            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
-              <span className="text-2xl">👥</span>
-              <span className="font-bold text-lg">{selected.size}</span>
-              <span className="text-sm">selecionados</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
-            {players.map(player => (
-              <div 
-                key={player.name} 
-                className="bg-green-50 border border-green-200 rounded-lg p-2 md:p-4 flex items-center space-x-2 md:space-x-3 hover:bg-green-100 transition-colors cursor-pointer"
-                onClick={() => handleCheck(player.name, !selected.has(player.name))}
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.has(player.name)}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    handleCheck(player.name, e.target.checked);
-                  }}
-                  className="form-checkbox h-4 w-4 md:h-5 md:w-5 text-green-600 focus:ring-green-500"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm md:text-base text-gray-800 truncate">{player.name}</p>
-                  <p className="text-xs md:text-sm text-gray-600">
-                    Nível <span className={`font-bold ${player.level === 'A' ? 'text-red-600' : player.level === 'B' ? 'text-yellow-600' : 'text-blue-600'}`}>
-                      {player.level}
-                    </span>
-                  </p>
-                </div>
-                <span className="text-lg md:text-2xl">⚽</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
+        {/* Botão para alternar entre gerenciar e selecionar jogadores */}
         <div className="text-center mb-6">
-          <button 
-            onClick={createTeams} 
-            className="bg-yellow-400 hover:bg-yellow-500 text-green-800 font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all"
-            disabled={selected.size < 6}
+          <button
+            onClick={() => setShowManager(!showManager)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all"
           >
-            ⚽ Montar Times Balanceados ⚽
+            {showManager ? '⚽ Voltar para Seleção' : '⚙️ Gerenciar Jogadores'}
           </button>
-          {selected.size < 6 && <p className="text-yellow-300 mt-2 font-semibold">Selecione pelo menos 5 jogadores para montar times!</p>}
         </div>
 
-        {teams.length > 0 && (
+        {showManager ? (
+          <PlayerManager
+            players={players}
+            onAddPlayer={addPlayer}
+            onUpdatePlayer={updatePlayer}
+            onRemovePlayer={removePlayer}
+          />
+        ) : (
+          <>
+            <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold text-green-800">Selecione os Jogadores Participantes</h2>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
+                  <span className="text-2xl">👥</span>
+                  <span className="font-bold text-lg">{selected.size}</span>
+                  <span className="text-sm">selecionados</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
+                {players.length === 0 ? (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    <div className="text-6xl mb-4">⚽</div>
+                    <div className="text-xl font-semibold mb-2">Nenhum jogador cadastrado</div>
+                    <div className="text-sm mb-4">Você precisa adicionar jogadores primeiro!</div>
+                    <button
+                      onClick={() => setShowManager(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold"
+                    >
+                      ⚙️ Gerenciar Jogadores
+                    </button>
+                  </div>
+                ) : (
+                  players.map(player => (
+                    <div 
+                      key={player.id} 
+                      className="bg-green-50 border border-green-200 rounded-lg p-2 md:p-4 flex items-center space-x-2 md:space-x-3 hover:bg-green-100 transition-colors cursor-pointer"
+                      onClick={() => handleCheck(player.id, !selected.has(player.id))}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected.has(player.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleCheck(player.id, e.target.checked);
+                        }}
+                        className="form-checkbox h-4 w-4 md:h-5 md:w-5 text-green-600 focus:ring-green-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm md:text-base text-gray-800 truncate">{player.name}</p>
+                        <div className="flex items-center space-x-1">
+                          <p className="text-xs md:text-sm text-gray-600">Nota:</p>
+                          <div className="flex items-center">
+                            {renderStars(player.rating, 'text-xs')}
+                            <span className="text-xs font-bold text-gray-700 ml-1">({player.rating})</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-lg md:text-2xl">⚽</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {!showManager && (
+          <>
+            <div className="text-center mb-6">
+              <button 
+                onClick={createTeams} 
+                className="bg-yellow-400 hover:bg-yellow-500 text-green-800 font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-all"
+                disabled={selected.size < 6}
+              >
+                ⚽ Montar Times Balanceados ⚽
+              </button>
+              {selected.size < 6 && <p className="text-yellow-300 mt-2 font-semibold">Selecione pelo menos 5 jogadores para montar times!</p>}
+            </div>
+          </>
+        )}
+
+        {!showManager && teams.length > 0 && (
           <div className="bg-white rounded-lg shadow-xl p-6">
             <h2 className="text-2xl font-semibold mb-6 text-green-800 text-center">🏆 Exemplos de Times Balanceados 🏆</h2>
             {selectedExample === null ? (
@@ -230,18 +287,25 @@ function App() {
                       Exemplo {idx + 1} - Distribuição Equilibrada
                     </h3>
                     <div className="flex space-x-1 overflow-x-auto pb-2 justify-center">
-                      {example.map((team, tIdx) => (
-                       <div key={tIdx} className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 rounded-lg p-1 shadow-lg flex-shrink-0 w-24 md:w-32">
-                          <h4 className="font-bold text-xs mb-1 text-center text-green-800 bg-white py-0.5 rounded">
-                            Time {tIdx + 1} ⚽
-                          </h4>
-                          <div className="text-center">
-                            <span className="text-xs text-gray-600">
-                              {team.length} jogadores
-                            </span>
+                      {example.map((team, tIdx) => {
+                        const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
+                        const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
+                        
+                        return (
+                          <div key={tIdx} className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 rounded-lg p-1 shadow-lg flex-shrink-0 w-24 md:w-32">
+                            <h4 className="font-bold text-xs mb-1 text-center text-green-800 bg-white py-0.5 rounded">
+                              Time {tIdx + 1} ⚽
+                            </h4>
+                            <div className="text-center bg-white rounded p-1 mt-1">
+                              <div className="text-xs text-gray-600">
+                                <div>{team.length} jogadores</div>
+                                <div>Total: <span className="font-bold text-green-700">{teamRatingSum}</span></div>
+                                <div>Média: <span className="font-bold text-green-700">{teamAverage}</span></div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <p className="text-center text-sm text-gray-600 mt-2">Clique para ver detalhes e placar</p>
                   </div>
@@ -264,6 +328,9 @@ function App() {
                       </h3>
                       <div className="flex space-x-1 overflow-x-auto pb-2 justify-center mb-6">
                         {example.map((team, tIdx) => {
+                          const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
+                          const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
+                          
                           return (
                             <div key={tIdx} className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 rounded-lg p-0.5 shadow-lg hover:shadow-xl transition-shadow flex-shrink-0 w-24 md:w-32">
                               <h4 className="font-bold text-xs mb-1 text-center text-green-800 bg-white py-0.5 rounded">
@@ -271,15 +338,20 @@ function App() {
                               </h4>
                               <ul className="space-y-0.5">
                                 {team.map(player => (
-                                  <li key={player.name} className="bg-white rounded px-1 py-0.5 text-xs shadow-sm truncate">
+                                  <li key={player.id} className="bg-white rounded px-1 py-0.5 text-xs shadow-sm truncate">
                                     <span className="font-medium truncate block text-xs">{player.name}</span>
-                                    <span className={`font-bold text-xs ${player.level === 'A' ? 'text-red-600' : player.level === 'B' ? 'text-yellow-600' : 'text-blue-600'}`}>
-                                      ({player.level})
-                                    </span>
+                                    <div className="flex items-center justify-center">
+                                      {renderStars(player.rating, 'text-xs')}
+                                    </div>
+                                    <span className="text-xs font-bold text-center block">({player.rating})</span>
                                   </li>
                                 ))}
                               </ul>
-                              <div className="mt-1 text-center">
+                              <div className="mt-1 text-center bg-white rounded p-1">
+                                <div className="text-xs text-gray-600">
+                                  <div>Total: <span className="font-bold text-green-700">{teamRatingSum}</span></div>
+                                  <div>Média: <span className="font-bold text-green-700">{teamAverage}</span></div>
+                                </div>
                               </div>
                             </div>
                           );
