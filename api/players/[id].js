@@ -1,4 +1,5 @@
-import { playerOperations } from '../../backend/database-simple.js';
+// Banco de dados em memória simples (sem imports externos)
+let players = [];
 
 // Função para validar rating
 const isValidRating = (rating) => {
@@ -24,7 +25,7 @@ export default function handler(req, res) {
   try {
     if (req.method === 'PUT') {
       // Atualizar jogador
-      const { name, rating } = req.body;
+      const { name, rating } = req.body || {};
       
       if (!name || rating === undefined || !isValidRating(rating)) {
         return res.status(400).json({ 
@@ -32,21 +33,29 @@ export default function handler(req, res) {
         });
       }
 
-      const updatedPlayer = playerOperations.update(id, name.trim(), rating);
-      if (updatedPlayer) {
-        res.status(200).json(updatedPlayer);
-      } else {
-        res.status(404).json({ error: 'Jogador não encontrado' });
+      const playerIndex = players.findIndex(p => p.id === id);
+      if (playerIndex === -1) {
+        return res.status(404).json({ error: 'Jogador não encontrado' });
       }
+
+      players[playerIndex] = {
+        ...players[playerIndex],
+        name: name.trim(),
+        rating: rating,
+        updated_at: new Date().toISOString()
+      };
+
+      res.status(200).json(players[playerIndex]);
       
     } else if (req.method === 'DELETE') {
       // Remover jogador
-      const deletedPlayer = playerOperations.delete(id);
-      if (deletedPlayer) {
-        res.status(200).json({ message: 'Jogador removido com sucesso', player: deletedPlayer });
-      } else {
-        res.status(404).json({ error: 'Jogador não encontrado' });
+      const playerIndex = players.findIndex(p => p.id === id);
+      if (playerIndex === -1) {
+        return res.status(404).json({ error: 'Jogador não encontrado' });
       }
+
+      const deletedPlayer = players.splice(playerIndex, 1)[0];
+      res.status(200).json({ message: 'Jogador removido com sucesso', player: deletedPlayer });
       
     } else {
       res.status(405).json({ error: 'Método não permitido' });
@@ -54,6 +63,10 @@ export default function handler(req, res) {
     
   } catch (error) {
     console.error('Erro na API:', error);
-    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+    res.status(500).json({ 
+      error: 'Erro interno do servidor', 
+      details: error.message,
+      stack: error.stack 
+    });
   }
 }

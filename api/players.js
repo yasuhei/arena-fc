@@ -1,4 +1,10 @@
-import { playerOperations } from '../backend/database-simple.js';
+// Banco de dados em memória simples (sem imports externos)
+let players = [];
+
+// Função para gerar UUID simples
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
 
 // Função para validar rating
 const isValidRating = (rating) => {
@@ -22,12 +28,12 @@ export default function handler(req, res) {
   try {
     if (req.method === 'GET') {
       // Listar todos os jogadores
-      const players = playerOperations.getAll();
-      res.status(200).json(players);
+      const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+      res.status(200).json(sortedPlayers);
       
     } else if (req.method === 'POST') {
       // Criar novo jogador
-      const { name, rating } = req.body;
+      const { name, rating } = req.body || {};
       
       if (!name || rating === undefined || !isValidRating(rating)) {
         return res.status(400).json({ 
@@ -35,12 +41,16 @@ export default function handler(req, res) {
         });
       }
 
-      const newPlayer = playerOperations.create(name.trim(), rating);
-      if (newPlayer) {
-        res.status(201).json(newPlayer);
-      } else {
-        res.status(500).json({ error: 'Erro ao criar jogador' });
-      }
+      const newPlayer = {
+        id: generateId(),
+        name: name.trim(),
+        rating: rating,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      players.push(newPlayer);
+      res.status(201).json(newPlayer);
       
     } else {
       res.status(405).json({ error: 'Método não permitido' });
@@ -48,6 +58,10 @@ export default function handler(req, res) {
     
   } catch (error) {
     console.error('Erro na API:', error);
-    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+    res.status(500).json({ 
+      error: 'Erro interno do servidor', 
+      details: error.message,
+      stack: error.stack 
+    });
   }
 }
