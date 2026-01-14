@@ -236,7 +236,7 @@ function App() {
         <div className="text-center mb-4 md:mb-6">
           <button
             onClick={() => setShowManager(!showManager)}
-            className="bg-white hover:bg-gray-100 text-black font-bold py-3 px-8 md:py-4 md:px-12 rounded-none text-sm md:text-base tracking-wider uppercase transition-all transform hover:scale-105 shadow-2xl"
+            className="bg-white hover:bg-gray-100 text-black font-black py-3 px-8 md:py-4 md:px-12 rounded-none text-sm md:text-base uppercase transition-all transform hover:scale-105 shadow-2xl"
             style={{ letterSpacing: '0.1em' }}
           >
             {showManager ? '← BACK TO SELECTION' : '⚙ MANAGE PLAYERS'}
@@ -298,14 +298,14 @@ function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {players.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-gray-500">
-                    <div className="text-6xl mb-4">⚽</div>
-                    <div className="text-xl font-semibold mb-2">Nenhum jogador cadastrado</div>
-                    <div className="text-sm mb-4">Você precisa adicionar jogadores primeiro!</div>
+                    <div className="text-6xl mb-4">⚡</div>
+                    <div className="text-xl md:text-2xl font-black mb-3 text-white uppercase tracking-wider">NO PLAYERS REGISTERED</div>
+                    <div className="text-sm uppercase tracking-wide mb-4">You need to add players first!</div>
                     <button
                       onClick={() => setShowManager(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold"
+                      className="bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
                     >
-                      ⚙️ Gerenciar Jogadores
+                      ⚙ MANAGE PLAYERS
                     </button>
                   </div>
                 ) : (
