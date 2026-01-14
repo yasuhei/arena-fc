@@ -159,8 +159,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700 flex items-center justify-center">
-        <div className="text-white text-2xl font-bold">Carregando jogadores...</div>
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <div className="text-white text-2xl font-black uppercase tracking-wider">LOADING PLAYERS...</div>
       </div>
     );
   }
