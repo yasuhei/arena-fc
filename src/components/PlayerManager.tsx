@@ -98,9 +98,11 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   };
 
   return (
-    <div className="bg-white bg-opacity-95 rounded-lg shadow-xl p-3 md:p-6 mb-4 md:mb-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4 space-y-2 sm:space-y-0">
-        <h2 className="text-lg md:text-2xl font-semibold text-green-800">Gerenciar Jogadores</h2>
+    <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-8 mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-3 sm:space-y-0">
+        <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
+          MANAGE PLAYERS
+        </h2>
         <button
           onClick={() => {
             setShowAddForm(!showAddForm);
@@ -108,64 +110,64 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
             setNewPlayerName('');
             setNewPlayerRating(3);
           }}
-          className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-semibold text-sm md:text-base"
+          className="bg-white hover:bg-gray-200 text-black px-4 py-3 md:px-6 md:py-3 rounded-none font-bold text-sm md:text-base uppercase tracking-wider transition-all"
         >
-          {showAddForm ? 'Cancelar' : '+ Adicionar Jogador'}
+          {showAddForm ? '✕ CANCEL' : '+ ADD PLAYER'}
         </button>
       </div>
 
       {/* Formulário de adicionar/editar */}
       {(showAddForm || editingPlayer) && (
-        <form onSubmit={editingPlayer ? handleUpdatePlayer : handleAddPlayer} className="bg-green-50 p-3 md:p-4 rounded-lg mb-3 md:mb-4">
-          <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-3 text-green-800">
-            {editingPlayer ? 'Editar Jogador' : 'Novo Jogador'}
+        <form onSubmit={editingPlayer ? handleUpdatePlayer : handleAddPlayer} className="bg-gray-900 border border-gray-700 p-4 md:p-6 rounded-none mb-6">
+          <h3 className="text-base md:text-lg font-black mb-4 text-white uppercase tracking-wider">
+            {editingPlayer ? 'EDIT PLAYER' : 'NEW PLAYER'}
           </h3>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-end">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
             <div className="flex-1 w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+              <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Name</label>
               <input
                 type="text"
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
-                placeholder="Nome do jogador"
+                className="w-full border-2 border-gray-700 bg-black text-white rounded-none px-4 py-3 focus:ring-2 focus:ring-white focus:border-white text-sm md:text-base font-bold uppercase"
+                placeholder="PLAYER NAME"
                 required
               />
             </div>
             <div className="w-full sm:w-auto">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nota (0-5)</label>
+              <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Rating (0-5)</label>
               <select
                 value={newPlayerRating}
                 onChange={(e) => setNewPlayerRating(parseFloat(e.target.value))}
-                className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
+                className="w-full sm:w-auto border-2 border-gray-700 bg-black text-white rounded-none px-4 py-3 focus:ring-2 focus:ring-white focus:border-white text-sm md:text-base font-bold"
               >
-                <option value={0}>0.0 - Muito Baixa</option>
-                <option value={0.5}>0.5 - Muito Baixa+</option>
-                <option value={1}>1.0 - Baixa</option>
-                <option value={1.5}>1.5 - Baixa+</option>
-                <option value={2}>2.0 - Regular</option>
-                <option value={2.5}>2.5 - Regular+</option>
-                <option value={3}>3.0 - Boa</option>
-                <option value={3.5}>3.5 - Boa+</option>
-                <option value={4}>4.0 - Muito Boa</option>
-                <option value={4.5}>4.5 - Muito Boa+</option>
-                <option value={5}>5.0 - Excelente</option>
+                <option value={0}>0.0 - BEGINNER</option>
+                <option value={0.5}>0.5 - BEGINNER+</option>
+                <option value={1}>1.0 - LOW</option>
+                <option value={1.5}>1.5 - LOW+</option>
+                <option value={2}>2.0 - REGULAR</option>
+                <option value={2.5}>2.5 - REGULAR+</option>
+                <option value={3}>3.0 - GOOD</option>
+                <option value={3.5}>3.5 - GOOD+</option>
+                <option value={4}>4.0 - VERY GOOD</option>
+                <option value={4.5}>4.5 - VERY GOOD+</option>
+                <option value={5}>5.0 - EXCELLENT</option>
               </select>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold"
+                className="bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
               >
-                {editingPlayer ? 'Atualizar' : 'Adicionar'}
+                {editingPlayer ? 'UPDATE' : 'ADD'}
               </button>
               {editingPlayer && (
                 <button
                   type="button"
                   onClick={cancelEdit}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold"
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
                 >
-                  Cancelar
+                  CANCEL
                 </button>
               )}
             </div>
@@ -176,31 +178,31 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       {/* Lista de jogadores com opções de editar/remover */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {players.map(player => (
-          <div key={player.id} className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between">
+          <div key={player.id} className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 hover:border-white rounded-none p-4 flex items-center justify-between transition-all group">
             <div>
-              <p className="font-semibold text-gray-800">{player.name}</p>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm text-gray-600">Nota:</p>
+              <p className="font-black text-white text-base md:text-lg uppercase tracking-wide">{player.name}</p>
+              <div className="flex items-center space-x-2 mt-2">
+                <p className="text-xs text-gray-400 uppercase tracking-wider">Rating:</p>
                 <div className="flex items-center space-x-1">
                   <div className="flex items-center">
-                    {renderStars(player.rating, 'text-lg')}
+                    {renderStars(player.rating, 'text-base')}
                   </div>
-                  <span className="text-sm font-bold text-gray-700">({player.rating})</span>
+                  <span className="text-sm font-black text-white">({player.rating})</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <button
                 onClick={() => startEdit(player)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                title="Editar"
+                className="bg-white hover:bg-gray-200 text-black w-7 h-7 rounded-none text-sm font-black transition-all flex items-center justify-center"
+                title="Edit"
               >
                 ✏️
               </button>
               <button
                 onClick={() => handleRemove(player)}
-                className="text-red-600 hover:text-red-800 text-sm font-medium"
-                title="Remover"
+                className="bg-gray-700 hover:bg-gray-600 text-white w-7 h-7 rounded-none text-sm font-black transition-all flex items-center justify-center"
+                title="Delete"
               >
                 🗑️
               </button>
@@ -210,10 +212,10 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       </div>
 
       {players.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <div className="text-6xl mb-4">⚽</div>
-          <div className="text-xl font-semibold mb-2">Nenhum jogador cadastrado</div>
-          <div className="text-sm">Clique em "Gerenciar Jogadores" para adicionar o primeiro jogador!</div>
+        <div className="text-center py-16 text-gray-400">
+          <div className="text-6xl mb-6">⚡</div>
+          <div className="text-xl md:text-2xl font-black mb-3 text-white uppercase tracking-wider">NO PLAYERS YET</div>
+          <div className="text-sm uppercase tracking-wide">Click "ADD PLAYER" to create your first player!</div>
         </div>
       )}
     </div>

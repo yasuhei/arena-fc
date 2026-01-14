@@ -181,25 +181,44 @@ function App() {
 
   return (
     <div 
-      className="min-h-screen relative"
+      className="min-h-screen relative bg-black"
       style={{
-        background: `repeating-linear-gradient(
-          0deg,
-          #22c55e 0px,
-          #22c55e 80px,
-          #16a34a 80px,
-          #16a34a 160px
-        )`
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif"
       }}
     >
+      {/* Background com gradiente sutil */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 opacity-95"></div>
+      
+      {/* Padrão geométrico sutil */}
+      <div 
+        className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 35px,
+            rgba(255,255,255,0.03) 35px,
+            rgba(255,255,255,0.03) 70px
+          )`
+        }}
+      ></div>
+      
       <AdSenseScript />
       
-      <header className="bg-green-800 text-white p-2 md:p-4 text-center shadow-lg">
-        <h1 className="text-xl md:text-3xl font-bold flex items-center justify-center space-x-1 md:space-x-2">
-          <span>🥅</span>
-          <span>Sem panela FC</span>
-          <span>⚽</span>
-        </h1>
+      <header className="relative z-10 bg-black bg-opacity-80 backdrop-blur-md border-b border-gray-800">
+        <div className="container mx-auto px-4 md:px-8 py-4 md:py-6">
+          <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white flex items-center justify-center space-x-3"
+              style={{ letterSpacing: '-0.02em' }}>
+            <span className="text-3xl md:text-5xl">⚡</span>
+            <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+              SEM PANELA FC
+            </span>
+            <span className="text-3xl md:text-5xl">⚡</span>
+          </h1>
+          <p className="text-center text-gray-400 text-xs md:text-sm mt-2 tracking-wide uppercase">
+            Performance • Balance • Victory
+          </p>
+        </div>
       </header>
 
       {/* Banner superior */}
@@ -212,14 +231,15 @@ function App() {
         />
       </div>
       
-      <div className="container mx-auto p-2 md:p-4 max-w-6xl relative z-10">
+      <div className="container mx-auto p-3 md:p-6 max-w-7xl relative z-10">
         {/* Botão para alternar entre gerenciar e selecionar jogadores */}
-        <div className="text-center mb-2 md:mb-4">
+        <div className="text-center mb-4 md:mb-6">
           <button
             onClick={() => setShowManager(!showManager)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full text-sm md:text-base shadow-lg transform hover:scale-105 transition-all"
+            className="bg-white hover:bg-gray-100 text-black font-bold py-3 px-8 md:py-4 md:px-12 rounded-none text-sm md:text-base tracking-wider uppercase transition-all transform hover:scale-105 shadow-2xl"
+            style={{ letterSpacing: '0.1em' }}
           >
-            {showManager ? '⚽ Voltar para Seleção' : '⚙️ Gerenciar Jogadores'}
+            {showManager ? '← BACK TO SELECTION' : '⚙ MANAGE PLAYERS'}
           </button>
         </div>
 
@@ -250,32 +270,32 @@ function App() {
           />
         ) : (
           <>
-            <div className="bg-white bg-opacity-95 rounded-lg shadow-xl p-2 md:p-4 mb-2 md:mb-4">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 md:mb-3 space-y-1 sm:space-y-0">
-                <h2 className="text-base md:text-xl font-semibold text-green-800">Selecione os Jogadores</h2>
-                <div className="flex items-center space-x-2">
+            <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-6 mb-4 md:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 space-y-2 sm:space-y-0">
+                <h2 className="text-lg md:text-2xl font-black tracking-tight text-white uppercase" style={{ letterSpacing: '0.05em' }}>
+                  SELECT PLAYERS
+                </h2>
+                <div className="flex items-center space-x-3">
                   <button
                     onClick={() => {
                       if (selected.size === players.length) {
-                        // Se todos estão selecionados, desmarcar todos
                         setSelected(new Set());
                       } else {
-                        // Se nem todos estão selecionados, marcar todos
                         setSelected(new Set(players.map(p => p.id)));
                       }
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 md:px-3 md:py-1 rounded text-xs md:text-sm font-semibold"
+                    className="bg-white hover:bg-gray-200 text-black px-3 py-2 md:px-4 md:py-2 rounded-none text-xs md:text-sm font-bold uppercase tracking-wider transition-all"
                   >
-                    {selected.size === players.length ? '❌ Desmarcar Todos' : '✅ Marcar Todos'}
+                    {selected.size === players.length ? 'CLEAR ALL' : 'SELECT ALL'}
                   </button>
-                  <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 md:px-3 md:py-1 rounded-full shadow-lg flex items-center space-x-1">
-                    <span className="text-sm md:text-lg">👥</span>
-                    <span className="font-bold text-sm md:text-base">{selected.size}</span>
-                    <span className="text-xs">selecionados</span>
+                  <div className="bg-white text-black px-3 py-2 md:px-4 md:py-2 rounded-none flex items-center space-x-2">
+                    <span className="text-sm md:text-base">👥</span>
+                    <span className="font-black text-sm md:text-lg">{selected.size}</span>
+                    <span className="text-xs uppercase tracking-wider">Selected</span>
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 md:gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {players.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-gray-500">
                     <div className="text-6xl mb-4">⚽</div>
@@ -292,7 +312,7 @@ function App() {
                   players.map(player => (
                     <div 
                       key={player.id} 
-                      className="bg-green-50 border border-green-200 rounded-lg p-1.5 md:p-2 flex items-center space-x-1.5 hover:bg-green-100 transition-colors cursor-pointer"
+                      className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 hover:border-white rounded-none p-3 md:p-4 flex items-center space-x-3 hover:bg-gray-800 transition-all cursor-pointer group"
                       onClick={() => handleCheck(player.id, !selected.has(player.id))}
                     >
                       <input
@@ -302,19 +322,19 @@ function App() {
                           e.stopPropagation();
                           handleCheck(player.id, e.target.checked);
                         }}
-                        className="form-checkbox h-3 w-3 md:h-4 md:w-4 text-green-600 focus:ring-green-500 flex-shrink-0"
+                        className="form-checkbox h-5 w-5 text-white bg-black border-2 border-gray-600 rounded-none focus:ring-white flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-xs md:text-sm text-gray-800 truncate">{player.name}</p>
-                        <div className="flex items-center space-x-0.5 mt-0.5">
-                          <p className="text-xs text-gray-600">Nota:</p>
+                        <p className="font-bold text-sm md:text-base text-white truncate uppercase tracking-wide">{player.name}</p>
+                        <div className="flex items-center space-x-1 mt-1">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider">Rating:</p>
                           <div className="flex items-center">
                             {renderStars(player.rating, 'text-xs')}
-                            <span className="text-xs font-bold text-gray-700 ml-0.5">({player.rating})</span>
+                            <span className="text-xs font-black text-white ml-1">({player.rating})</span>
                           </div>
                         </div>
                       </div>
-                      <span className="text-sm md:text-base flex-shrink-0">⚽</span>
+                      <span className="text-xl flex-shrink-0 group-hover:scale-110 transition-transform">⚡</span>
                     </div>
                   ))
                 )}
@@ -325,15 +345,16 @@ function App() {
 
         {!showManager && (
           <>
-            <div className="text-center mb-2 md:mb-4">
+            <div className="text-center mb-4 md:mb-6">
               <button 
                 onClick={createTeams} 
-                className="bg-yellow-400 hover:bg-yellow-500 text-green-800 font-bold py-2 px-4 md:py-3 md:px-6 rounded-full text-sm md:text-base shadow-lg transform hover:scale-105 transition-all"
+                className="bg-white hover:bg-gray-100 text-black font-black py-4 px-10 md:py-5 md:px-16 rounded-none text-base md:text-lg shadow-2xl transform hover:scale-105 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={selected.size < 6}
+                style={{ letterSpacing: '0.15em' }}
               >
-                ⚽ Montar Times Balanceados ⚽
+                ⚡ CREATE TEAMS ⚡
               </button>
-              {selected.size < 6 && <p className="text-yellow-300 mt-1 font-semibold text-xs md:text-sm">Selecione pelo menos 5 jogadores!</p>}
+              {selected.size < 6 && <p className="text-gray-400 mt-3 font-medium text-xs md:text-sm uppercase tracking-wide">Select at least 6 players to create teams</p>}
             </div>
 
             {/* Banner no meio do conteúdo */}
@@ -349,37 +370,39 @@ function App() {
         )}
 
         {!showManager && teams.length > 0 && (
-          <div className="bg-white rounded-lg shadow-xl p-6">
-            <h2 className="text-2xl font-semibold mb-6 text-green-800 text-center">🏆 Exemplos de Times Balanceados 🏆</h2>
+          <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-8">
+            <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
+              ⚡ BALANCED TEAMS ⚡
+            </h2>
             {selectedExample === null ? (
-              <div className="grid gap-4">
+              <div className="grid gap-6">
                 {teams.map((example, idx) => (
-                  <div key={idx} className="bg-green-50 border-2 border-green-300 rounded-lg p-4 cursor-pointer hover:bg-green-100 transition-colors" onClick={() => setSelectedExample(idx)}>
-                    <h3 className="text-xl font-medium mb-2 text-center text-green-700">
-                      Exemplo {idx + 1} - Distribuição Equilibrada
+                  <div key={idx} className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 hover:border-white rounded-none p-6 cursor-pointer hover:bg-gray-800 transition-all group" onClick={() => setSelectedExample(idx)}>
+                    <h3 className="text-lg md:text-xl font-black mb-4 text-center text-white uppercase tracking-wide">
+                      OPTION {idx + 1} • BALANCED DISTRIBUTION
                     </h3>
-                    <div className="flex space-x-1 overflow-x-auto pb-2 justify-center">
+                    <div className="flex space-x-2 overflow-x-auto pb-2 justify-center">
                       {example.map((team, tIdx) => {
                         const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
                         const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
                         
                         return (
-                          <div key={tIdx} className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 rounded-lg p-1 shadow-lg flex-shrink-0 w-24 md:w-32">
-                            <h4 className="font-bold text-xs mb-1 text-center text-green-800 bg-white py-0.5 rounded">
-                              Time {tIdx + 1} ⚽
+                          <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-3 shadow-xl flex-shrink-0 w-28 md:w-36">
+                            <h4 className="font-black text-xs mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
+                              TEAM {tIdx + 1}
                             </h4>
-                            <div className="text-center bg-white rounded p-1 mt-1">
-                              <div className="text-xs text-gray-600">
-                                <div>{team.length} jogadores</div>
-                                <div>Total: <span className="font-bold text-green-700">{teamRatingSum}</span></div>
-                                <div>Média: <span className="font-bold text-green-700">{teamAverage}</span></div>
+                            <div className="text-center bg-gray-900 p-2 mt-2">
+                              <div className="text-xs text-gray-400 space-y-1">
+                                <div className="uppercase tracking-wide">{team.length} Players</div>
+                                <div className="text-white font-bold text-sm">Total: {teamRatingSum}</div>
+                                <div className="text-white font-bold text-sm">Avg: {teamAverage}</div>
                               </div>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <p className="text-center text-sm text-gray-600 mt-2">Clique para ver detalhes e placar</p>
+                    <p className="text-center text-sm text-gray-400 mt-4 uppercase tracking-wide group-hover:text-white transition-colors">Click to view details and scores</p>
                   </div>
                 ))}
               </div>
@@ -387,16 +410,16 @@ function App() {
               <div>
                 <button 
                   onClick={() => setSelectedExample(null)} 
-                  className="mb-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                  className="mb-6 bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-none font-bold uppercase tracking-wider transition-all"
                 >
-                  ← Voltar aos Exemplos
+                  ← BACK TO OPTIONS
                 </button>
                 {(() => {
                   const example = teams[selectedExample];
                   return (
                     <div>
-                      <h3 className="text-xl font-medium mb-4 text-center text-green-700 bg-green-100 py-2 rounded-lg">
-                        Exemplo {selectedExample + 1} - Distribuição Equilibrada
+                      <h3 className="text-xl font-black mb-6 text-center text-white bg-gray-900 py-3 rounded-none uppercase tracking-wide">
+                        OPTION {selectedExample + 1} • BALANCED DISTRIBUTION
                       </h3>
                       <div className="flex space-x-1 overflow-x-auto pb-2 justify-center mb-6">
                         {example.map((team, tIdx) => {
@@ -404,25 +427,25 @@ function App() {
                           const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
                           
                           return (
-                            <div key={tIdx} className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 rounded-lg p-0.5 shadow-lg hover:shadow-xl transition-shadow flex-shrink-0 w-24 md:w-32">
-                              <h4 className="font-bold text-xs mb-1 text-center text-green-800 bg-white py-0.5 rounded">
-                                Time {tIdx + 1} ⚽
+                            <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 shadow-2xl hover:border-white transition-all flex-shrink-0 w-28 md:w-40">
+                              <h4 className="font-black text-xs mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
+                                TEAM {tIdx + 1}
                               </h4>
-                              <ul className="space-y-0.5">
+                              <ul className="space-y-1">
                                 {team.map(player => (
-                                  <li key={player.id} className="bg-white rounded px-1 py-0.5 text-xs shadow-sm truncate">
-                                    <span className="font-medium truncate block text-xs">{player.name}</span>
-                                    <div className="flex items-center justify-center">
+                                  <li key={player.id} className="bg-gray-900 rounded-none px-2 py-1 text-xs shadow-sm">
+                                    <span className="font-bold truncate block text-xs text-white uppercase">{player.name}</span>
+                                    <div className="flex items-center justify-center mt-0.5">
                                       {renderStars(player.rating, 'text-xs')}
                                     </div>
-                                    <span className="text-xs font-bold text-center block">({player.rating})</span>
+                                    <span className="text-xs font-black text-center block text-gray-400">({player.rating})</span>
                                   </li>
                                 ))}
                               </ul>
-                              <div className="mt-1 text-center bg-white rounded p-1">
-                                <div className="text-xs text-gray-600">
-                                  <div>Total: <span className="font-bold text-green-700">{teamRatingSum}</span></div>
-                                  <div>Média: <span className="font-bold text-green-700">{teamAverage}</span></div>
+                              <div className="mt-2 text-center bg-gray-900 p-2">
+                                <div className="text-xs text-gray-400 space-y-1">
+                                  <div className="uppercase tracking-wide">Total: <span className="font-black text-white">{teamRatingSum}</span></div>
+                                  <div className="uppercase tracking-wide">Avg: <span className="font-black text-white">{teamAverage}</span></div>
                                 </div>
                               </div>
                             </div>
@@ -430,59 +453,59 @@ function App() {
                         })}
                       </div>
                       
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-lg font-semibold text-gray-700">📊 Placar dos Jogos</h4>
+                      <div className="bg-gray-900 rounded-none p-6 border border-gray-800">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">📊 MATCH SCORES</h4>
                           <button 
                             onClick={() => addCustomGame(selectedExample)} 
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                            className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs md:text-sm font-bold uppercase tracking-wider transition-all"
                           >
-                            + Adicionar Jogo
+                            + ADD MATCH
                           </button>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {(customGames[selectedExample] || []).map((game, gameIdx) => {
-                            const result = game.score1 > game.score2 ? `Vitória Time ${game.team1 + 1}` : 
-                                          game.score1 < game.score2 ? `Vitória Time ${game.team2 + 1}` : 
-                                          'Empate';
+                            const result = game.score1 > game.score2 ? `TEAM ${game.team1 + 1} WINS` : 
+                                          game.score1 < game.score2 ? `TEAM ${game.team2 + 1} WINS` : 
+                                          'DRAW';
                             return (
-                              <div key={gameIdx} className="bg-white p-2 rounded">
-                                <div className="flex items-center justify-center space-x-1 md:space-x-2 mb-2">
+                              <div key={gameIdx} className="bg-black border border-gray-700 p-3 rounded-none">
+                                <div className="flex items-center justify-center space-x-2 md:space-x-3 mb-3">
                                   <select 
-                                    className="border rounded px-1 md:px-2 py-1 text-xs md:text-sm"
+                                    className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
                                     value={game.team1}
                                     onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team1', parseInt(e.target.value))}
                                     disabled={game.confirmed}
                                   >
                                     {example.map((_, tIdx) => (
-                                      <option key={tIdx} value={tIdx}>Time {tIdx + 1}</option>
+                                      <option key={tIdx} value={tIdx}>TEAM {tIdx + 1}</option>
                                     ))}
                                   </select>
                                   <input
                                     type="number"
                                     min="0"
-                                    className="w-8 md:w-12 text-center border rounded px-1 py-1 text-xs md:text-sm"
+                                    className="w-10 md:w-14 text-center border-2 border-gray-600 bg-black text-white rounded-none px-2 py-2 text-sm md:text-base font-black"
                                     value={game.score1}
                                     onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score1', parseInt(e.target.value) || 0)}
                                     disabled={game.confirmed}
                                   />
-                                  <span className="text-xs md:text-sm">x</span>
+                                  <span className="text-sm md:text-lg text-white font-black">×</span>
                                   <input
                                     type="number"
                                     min="0"
-                                    className="w-8 md:w-12 text-center border rounded px-1 py-1 text-xs md:text-sm"
+                                    className="w-10 md:w-14 text-center border-2 border-gray-600 bg-black text-white rounded-none px-2 py-2 text-sm md:text-base font-black"
                                     value={game.score2}
                                     onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score2', parseInt(e.target.value) || 0)}
                                     disabled={game.confirmed}
                                   />
                                   <select 
-                                    className="border rounded px-1 md:px-2 py-1 text-xs md:text-sm"
+                                    className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
                                     value={game.team2}
                                     onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team2', parseInt(e.target.value))}
                                     disabled={game.confirmed}
                                   >
                                     {example.map((_, tIdx) => (
-                                      <option key={tIdx} value={tIdx}>Time {tIdx + 1}</option>
+                                      <option key={tIdx} value={tIdx}>TEAM {tIdx + 1}</option>
                                     ))}
                                   </select>
                                 </div>
@@ -491,28 +514,28 @@ function App() {
                                   <div className="flex justify-center">
                                     <button 
                                       onClick={() => confirmGame(selectedExample, gameIdx)}
-                                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-semibold"
+                                      className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs font-black uppercase tracking-wider transition-all"
                                     >
-                                      ✓ Confirmar Resultado
+                                      ✓ CONFIRM RESULT
                                     </button>
                                   </div>
                                 ) : (
                                   <div className="flex flex-col items-center space-y-1">
                                     <span className={`text-xs font-bold px-2 py-1 rounded ${
-                                      game.score1 > game.score2 ? 'bg-green-100 text-green-800' :
-                                      game.score1 < game.score2 ? 'bg-red-100 text-red-800' :
-                                      'bg-yellow-100 text-yellow-800'
+                                      game.score1 > game.score2 ? 'bg-white text-black' :
+                                      game.score1 < game.score2 ? 'bg-gray-800 text-white' :
+                                      'bg-gray-600 text-white'
                                     }`}>
                                       {result}
                                     </span>
-                                    <div className="text-xs text-gray-600 flex space-x-3">
-                                      <span className="text-green-600 font-semibold">V: {
+                                    <div className="text-xs text-gray-400 flex space-x-4 uppercase tracking-wider">
+                                      <span className="text-white font-black">W: {
                                         game.score1 > game.score2 ? '1' : game.score1 < game.score2 ? '0' : '0'
                                       }</span>
-                                      <span className="text-yellow-600 font-semibold">E: {
+                                      <span className="text-gray-400 font-black">D: {
                                         game.score1 === game.score2 ? '1' : '0'
                                       }</span>
-                                      <span className="text-red-600 font-semibold">D: {
+                                      <span className="text-gray-600 font-black">L: {
                                         game.score1 < game.score2 ? '1' : game.score1 > game.score2 ? '0' : '0'
                                       }</span>
                                     </div>
@@ -542,36 +565,36 @@ function App() {
         </div>
 
         {/* Rodapé com links importantes */}
-        <footer className="text-center text-white text-xs py-2 md:py-3 border-t border-white border-opacity-20 bg-green-800 bg-opacity-80 relative z-10">
-          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-3 space-y-1 sm:space-y-0 mb-2">
+        <footer className="text-center text-gray-400 text-xs py-4 md:py-6 border-t border-gray-800 bg-black bg-opacity-80 backdrop-blur-md relative z-10">
+          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-6 space-y-2 sm:space-y-0 mb-3 uppercase tracking-wider">
             <a 
               href="/sobre.html" 
               target="_blank"
-              className="hover:text-yellow-300 underline"
+              className="hover:text-white transition-colors font-medium"
             >
-              Sobre
+              About
             </a>
-            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline text-gray-700">|</span>
             <a 
               href="/como-usar.html" 
               target="_blank"
-              className="hover:text-yellow-300 underline"
+              className="hover:text-white transition-colors font-medium"
             >
-              Como Usar
+              How to Use
             </a>
-            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline text-gray-700">|</span>
             <a 
               href="/privacy-policy.html" 
               target="_blank"
-              className="hover:text-yellow-300 underline"
+              className="hover:text-white transition-colors font-medium"
             >
-              Política de Privacidade
+              Privacy Policy
             </a>
           </div>
-          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-3 space-y-1 sm:space-y-0">
-            <span>© 2026 Sem panela FC</span>
+          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-4 space-y-1 sm:space-y-0 text-gray-600">
+            <span className="font-black tracking-wider">© 2026 SEM PANELA FC</span>
             <span className="hidden sm:inline">•</span>
-            <span>Feito com ⚽ para amantes do futebol</span>
+            <span className="uppercase tracking-wide">Performance Driven</span>
           </div>
         </footer>
       </div>
