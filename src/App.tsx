@@ -543,7 +543,23 @@ function App() {
 
         {/* Rodapé com links importantes */}
         <footer className="text-center text-white text-xs py-2 md:py-3 border-t border-white border-opacity-20 bg-green-800 bg-opacity-80 relative z-10">
-          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-3 space-y-1 sm:space-y-0">
+          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-3 space-y-1 sm:space-y-0 mb-2">
+            <a 
+              href="/sobre.html" 
+              target="_blank"
+              className="hover:text-yellow-300 underline"
+            >
+              Sobre
+            </a>
+            <span className="hidden sm:inline">•</span>
+            <a 
+              href="/como-usar.html" 
+              target="_blank"
+              className="hover:text-yellow-300 underline"
+            >
+              Como Usar
+            </a>
+            <span className="hidden sm:inline">•</span>
             <a 
               href="/privacy-policy.html" 
               target="_blank"
@@ -551,7 +567,8 @@ function App() {
             >
               Política de Privacidade
             </a>
-            <span className="hidden sm:inline">•</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-3 space-y-1 sm:space-y-0">
             <span>© 2026 Sem panela FC</span>
             <span className="hidden sm:inline">•</span>
             <span>Feito com ⚽ para amantes do futebol</span>
