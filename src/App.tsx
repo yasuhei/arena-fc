@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePlayers, Player } from './hooks/usePlayers';
 import { PlayerManager } from './components/PlayerManager';
 import AdBanner from './components/AdBanner';
@@ -113,6 +113,16 @@ function App() {
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
   const [customGames, setCustomGames] = useState<{[key: number]: Array<{team1: number, team2: number, score1: number, score2: number, confirmed: boolean}>}>({});
   const [showManager, setShowManager] = useState(false);
+  const [view, setView] = useState<'selection' | 'teams' | 'match'>('selection'); // Adicionado 'match'
+  const [manualTeams, setManualTeams] = useState<Player[][]>([[], []]); // Times manuais
+  const [creationMode, setCreationMode] = useState<'auto' | 'manual'>('auto'); // Modo de criação
+  const [confirmedTeams, setConfirmedTeams] = useState<Player[][] | null>(null); // Times confirmados
+  
+  // Estados do timer
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [timerPreset, setTimerPreset] = useState<number | null>(null); // 5 ou 10 minutos (em segundos: 300 ou 600)
 
   const handleCheck = (playerId: string, checked: boolean) => {
     const newSelected = new Set(selected);
@@ -122,14 +132,152 @@ function App() {
   };
 
   const createTeams = () => {
-    const examples: Player[][][] = [];
-    for (let i = 0; i < 3; i++) {
-      const teamExample = createBalancedTeams(selected, players);
-      examples.push(teamExample);
+    if (creationMode === 'auto') {
+      const examples: Player[][][] = [];
+      for (let i = 0; i < 3; i++) {
+        const teamExample = createBalancedTeams(selected, players);
+        examples.push(teamExample);
+      }
+      setTeams(examples);
+      setSelectedExample(null);
+      setCustomGames({});
+      setView('teams'); // Muda para view de times
+    } else {
+      // Modo manual: inicializa times vazios
+      const numTeams = 2; // Pode ser configurável
+      setManualTeams(Array.from({ length: numTeams }, () => []));
+      setView('teams');
     }
-    setTeams(examples);
+  };
+
+  const addPlayerToManualTeam = (player: Player, teamIndex: number) => {
+    setManualTeams(prev => {
+      const newTeams = [...prev];
+      // Remove o jogador de qualquer time que ele esteja
+      newTeams.forEach(team => {
+        const idx = team.findIndex(p => p.id === player.id);
+        if (idx !== -1) team.splice(idx, 1);
+      });
+      // Adiciona ao time selecionado
+      newTeams[teamIndex] = [...newTeams[teamIndex], player];
+      return newTeams;
+    });
+  };
+
+  const removePlayerFromManualTeam = (playerId: string, teamIndex: number) => {
+    setManualTeams(prev => {
+      const newTeams = [...prev];
+      newTeams[teamIndex] = newTeams[teamIndex].filter(p => p.id !== playerId);
+      return newTeams;
+    });
+  };
+
+  const movePlayerBetweenTeams = (player: Player, fromTeam: number, toTeam: number) => {
+    setManualTeams(prev => {
+      const newTeams = [...prev];
+      // Remove do time atual
+      newTeams[fromTeam] = newTeams[fromTeam].filter(p => p.id !== player.id);
+      // Adiciona ao novo time
+      newTeams[toTeam] = [...newTeams[toTeam], player];
+      return newTeams;
+    });
+  };
+
+  const movePlayerInAutoTeams = (player: Player, fromTeam: number, toTeam: number, exampleIdx: number) => {
+    setTeams(prev => {
+      const newTeams = [...prev];
+      const example = [...newTeams[exampleIdx]];
+      // Remove do time atual
+      example[fromTeam] = example[fromTeam].filter(p => p.id !== player.id);
+      // Adiciona ao novo time
+      example[toTeam] = [...example[toTeam], player];
+      newTeams[exampleIdx] = example;
+      return newTeams;
+    });
+  };
+
+  const addManualTeam = () => {
+    setManualTeams(prev => [...prev, []]);
+  };
+
+  const backToSelection = () => {
+    setView('selection');
+    setTeams([]);
+    setManualTeams([[], []]);
     setSelectedExample(null);
-    setCustomGames({});
+    setConfirmedTeams(null);
+    stopTimer();
+  };
+
+  const confirmTeams = () => {
+    if (creationMode === 'auto' && selectedExample !== null) {
+      setConfirmedTeams(teams[selectedExample]);
+    } else if (creationMode === 'manual') {
+      setConfirmedTeams(manualTeams);
+    }
+    setView('match');
+    setCustomGames({ 0: [] }); // Reset games
+  };
+
+  // Funções do Timer
+  const playWhistle = () => {
+    const audio = new Audio('/src/img/the-sound-where-the-physical-education-teacher-blows-the-whistle.mp3');
+    audio.volume = 0.5; // Volume a 50%
+    audio.play().catch(err => console.error('Error playing whistle:', err));
+  };
+
+  const startTimer = () => {
+    if (!timerRunning) {
+      setTimerRunning(true);
+      const interval = setInterval(() => {
+        setTimerSeconds(prev => prev + 1);
+      }, 1000);
+      setTimerInterval(interval);
+    }
+  };
+
+  const pauseTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
+    setTimerRunning(false);
+  };
+
+  const resetTimer = () => {
+    pauseTimer();
+    setTimerSeconds(0);
+  };
+
+  const stopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
+    setTimerRunning(false);
+    setTimerSeconds(0);
+    setTimerPreset(null);
+  };
+
+  // Efeito para verificar se atingiu o preset
+  useEffect(() => {
+    if (timerPreset && timerSeconds >= timerPreset && timerRunning) {
+      playWhistle();
+      pauseTimer();
+    }
+  }, [timerSeconds, timerPreset, timerRunning]);
+
+  const setPresetTime = (minutes: number) => {
+    const seconds = minutes * 60;
+    setTimerPreset(seconds);
+    setTimerSeconds(0);
+    pauseTimer();
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const addCustomGame = (exampleIdx: number) => {
@@ -155,6 +303,38 @@ function App() {
         idx === gameIdx ? { ...game, confirmed: true } : game
       )
     }));
+  };
+
+  const shareTeamsOnWhatsApp = () => {
+    let teamsToShare: Player[][] = [];
+    
+    if (creationMode === 'auto' && selectedExample !== null) {
+      teamsToShare = teams[selectedExample];
+    } else if (creationMode === 'manual') {
+      teamsToShare = manualTeams;
+    }
+    
+    // Formata a mensagem
+    let message = '⚽ *SEM PANELA FC* ⚽\n\n';
+    message += '🏆 *TEAMS FORMED* 🏆\n\n';
+    
+    teamsToShare.forEach((team, idx) => {
+      message += `*TEAM ${idx + 1}*\n`;
+      team.forEach((player, pIdx) => {
+        message += `${pIdx + 1}. ${player.name}\n`;
+      });
+      message += '\n';
+    });
+    
+    message += '---\n';
+    message += 'Created with Sem Panela FC\n';
+    message += 'https://sem-panela-fc.vercel.app/';
+    
+    // Codifica a mensagem para URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Abre o WhatsApp
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
   };
 
   if (loading) {
@@ -261,14 +441,16 @@ function App() {
           />
         </div>
 
-        {showManager ? (
+        {showManager && (
           <PlayerManager
             players={players}
             onAddPlayer={addPlayer}
             onUpdatePlayer={updatePlayer}
             onRemovePlayer={removePlayer}
           />
-        ) : (
+        )}
+
+        {!showManager && view === 'selection' && (
           <>
             <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-6 mb-4 md:mb-6">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 space-y-2 sm:space-y-0">
@@ -340,12 +522,33 @@ function App() {
                 )}
               </div>
             </div>
-          </>
-        )}
 
-        {!showManager && (
-          <>
-            <div className="text-center mb-4 md:mb-6">
+            {/* Seletor de modo e botão de criar times */}
+            <div className="text-center mb-4 md:mb-6 space-y-4">
+              {/* Seletor de modo */}
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={() => setCreationMode('auto')}
+                  className={`px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all ${
+                    creationMode === 'auto'
+                      ? 'bg-white text-black'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  ⚡ AUTO BALANCE
+                </button>
+                <button
+                  onClick={() => setCreationMode('manual')}
+                  className={`px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all ${
+                    creationMode === 'manual'
+                      ? 'bg-white text-black'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  ✋ MANUAL SETUP
+                </button>
+              </div>
+
               <button 
                 onClick={createTeams} 
                 className="bg-white hover:bg-gray-100 text-black font-black py-4 px-10 md:py-5 md:px-16 rounded-none text-base md:text-lg shadow-2xl transform hover:scale-105 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
@@ -369,11 +572,150 @@ function App() {
           </>
         )}
 
-        {!showManager && teams.length > 0 && (
+        {!showManager && view === 'teams' && (
           <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-8">
-            <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
-              ⚡ BALANCED TEAMS ⚡
-            </h2>
+            {/* Botão de navegação */}
+            <div className="mb-6">
+              <button 
+                onClick={backToSelection} 
+                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+              >
+                ← BACK TO SELECTION
+              </button>
+            </div>
+
+            {creationMode === 'manual' ? (
+              // VIEW DE TIMES MANUAIS
+              <>
+                <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
+                  ✋ MANUAL TEAM SETUP
+                </h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* Jogadores disponíveis */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-none p-4">
+                    <h3 className="text-lg font-black text-white uppercase tracking-wider mb-4">
+                      📋 AVAILABLE PLAYERS
+                    </h3>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {players.filter(p => selected.has(p.id) && !manualTeams.some(team => team.find(tp => tp.id === p.id))).map(player => (
+                        <div key={player.id} className="bg-black border border-gray-600 rounded-none p-3 flex items-center justify-between">
+                          <div>
+                            <p className="font-black text-white text-sm uppercase">{player.name}</p>
+                            <div className="flex items-center space-x-1 mt-1">
+                              {renderStars(player.rating, 'text-xs')}
+                              <span className="text-xs font-black text-gray-400">({player.rating})</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            {manualTeams.map((_, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => addPlayerToManualTeam(player, idx)}
+                                className="bg-white hover:bg-gray-200 text-black w-8 h-8 rounded-none text-xs font-black transition-all"
+                                title={`Add to Team ${idx + 1}`}
+                              >
+                                {idx + 1}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Times */}
+                  <div className="space-y-4">
+                    {manualTeams.map((team, teamIdx) => {
+                      const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
+                      const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
+                      
+                      return (
+                        <div key={teamIdx} className="bg-black border-2 border-gray-600 rounded-none p-4">
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="font-black text-white uppercase tracking-wider">
+                              TEAM {teamIdx + 1}
+                            </h4>
+                            <div className="text-xs text-gray-400 space-x-3">
+                              <span className="text-white font-black">Total: {teamRatingSum}</span>
+                              <span className="text-white font-black">Avg: {teamAverage}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2 min-h-[100px]">
+                            {team.map(player => (
+                              <div key={player.id} className="bg-gray-900 border border-gray-700 rounded-none p-2 flex items-center justify-between">
+                                <div>
+                                  <p className="font-black text-white text-sm uppercase">{player.name}</p>
+                                  <div className="flex items-center space-x-1 mt-1">
+                                    {renderStars(player.rating, 'text-xs')}
+                                    <span className="text-xs font-black text-gray-400">({player.rating})</span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-1">
+                                  {/* Botões para mover para outros times */}
+                                  {manualTeams.map((_, idx) => idx !== teamIdx && (
+                                    <button
+                                      key={idx}
+                                      onClick={() => movePlayerBetweenTeams(player, teamIdx, idx)}
+                                      className="bg-gray-700 hover:bg-gray-600 text-white w-7 h-7 rounded-none text-xs font-black transition-all"
+                                      title={`Move to Team ${idx + 1}`}
+                                    >
+                                      →{idx + 1}
+                                    </button>
+                                  ))}
+                                  <button
+                                    onClick={() => removePlayerFromManualTeam(player.id, teamIdx)}
+                                    className="bg-gray-700 hover:bg-gray-600 text-white w-7 h-7 rounded-none text-xs font-black transition-all"
+                                    title="Remove"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                            {team.length === 0 && (
+                              <div className="text-center text-gray-500 py-8 text-xs uppercase tracking-wide">
+                                Empty team - Add players
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <button
+                      onClick={addManualTeam}
+                      className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                    >
+                      + ADD TEAM
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Botões Confirmar e Compartilhar - Manual Mode */}
+                <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <button 
+                    onClick={shareTeamsOnWhatsApp}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
+                    style={{ letterSpacing: '0.15em' }}
+                  >
+                    <span className="text-2xl">📱</span>
+                    SHARE ON WHATSAPP
+                  </button>
+                  <button 
+                    onClick={confirmTeams}
+                    className="bg-white hover:bg-gray-100 text-black px-10 py-4 md:px-16 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105"
+                    style={{ letterSpacing: '0.15em' }}
+                  >
+                    ✓ CONFIRM TEAMS
+                  </button>
+                </div>
+              </>
+            ) : (
+              // VIEW DE TIMES AUTOMÁTICOS (código existente)
+              <>
+                <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
+                  ⚡ BALANCED TEAMS ⚡
+                </h2>
             {selectedExample === null ? (
               <div className="grid gap-6">
                 {teams.map((example, idx) => (
@@ -427,18 +769,34 @@ function App() {
                           const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
                           
                           return (
-                            <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 shadow-2xl hover:border-white transition-all flex-shrink-0 w-28 md:w-40">
+                            <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 shadow-2xl hover:border-white transition-all flex-shrink-0 w-32 md:w-48">
                               <h4 className="font-black text-xs mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
                                 TEAM {tIdx + 1}
                               </h4>
                               <ul className="space-y-1">
                                 {team.map(player => (
                                   <li key={player.id} className="bg-gray-900 rounded-none px-2 py-1 text-xs shadow-sm">
-                                    <span className="font-bold truncate block text-xs text-white uppercase">{player.name}</span>
-                                    <div className="flex items-center justify-center mt-0.5">
-                                      {renderStars(player.rating, 'text-xs')}
+                                    <div className="flex items-center justify-between gap-1">
+                                      <div className="flex-1 min-w-0">
+                                        <span className="font-bold truncate block text-xs text-white uppercase">{player.name}</span>
+                                        <div className="flex items-center justify-center mt-0.5">
+                                          {renderStars(player.rating, 'text-xs')}
+                                        </div>
+                                        <span className="text-xs font-black text-center block text-gray-400">({player.rating})</span>
+                                      </div>
+                                      <div className="flex flex-col gap-0.5">
+                                        {example.map((_, targetIdx) => targetIdx !== tIdx && (
+                                          <button
+                                            key={targetIdx}
+                                            onClick={() => movePlayerInAutoTeams(player, tIdx, targetIdx, selectedExample)}
+                                            className="bg-gray-700 hover:bg-gray-600 text-white w-6 h-6 rounded-none text-xs font-black transition-all flex items-center justify-center"
+                                            title={`Move to Team ${targetIdx + 1}`}
+                                          >
+                                            {targetIdx + 1}
+                                          </button>
+                                        ))}
+                                      </div>
                                     </div>
-                                    <span className="text-xs font-black text-center block text-gray-400">({player.rating})</span>
                                   </li>
                                 ))}
                               </ul>
@@ -453,104 +811,220 @@ function App() {
                         })}
                       </div>
                       
-                      <div className="bg-gray-900 rounded-none p-6 border border-gray-800">
-                        <div className="flex justify-between items-center mb-4">
-                          <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">📊 MATCH SCORES</h4>
-                          <button 
-                            onClick={() => addCustomGame(selectedExample)} 
-                            className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs md:text-sm font-bold uppercase tracking-wider transition-all"
-                          >
-                            + ADD MATCH
-                          </button>
-                        </div>
-                        <div className="space-y-3">
-                          {(customGames[selectedExample] || []).map((game, gameIdx) => {
-                            const result = game.score1 > game.score2 ? `TEAM ${game.team1 + 1} WINS` : 
-                                          game.score1 < game.score2 ? `TEAM ${game.team2 + 1} WINS` : 
-                                          'DRAW';
-                            return (
-                              <div key={gameIdx} className="bg-black border border-gray-700 p-3 rounded-none">
-                                <div className="flex items-center justify-center space-x-2 md:space-x-3 mb-3">
-                                  <select 
-                                    className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
-                                    value={game.team1}
-                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team1', parseInt(e.target.value))}
-                                    disabled={game.confirmed}
-                                  >
-                                    {example.map((_, tIdx) => (
-                                      <option key={tIdx} value={tIdx}>TEAM {tIdx + 1}</option>
-                                    ))}
-                                  </select>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    className="w-10 md:w-14 text-center border-2 border-gray-600 bg-black text-white rounded-none px-2 py-2 text-sm md:text-base font-black"
-                                    value={game.score1}
-                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score1', parseInt(e.target.value) || 0)}
-                                    disabled={game.confirmed}
-                                  />
-                                  <span className="text-sm md:text-lg text-white font-black">×</span>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    className="w-10 md:w-14 text-center border-2 border-gray-600 bg-black text-white rounded-none px-2 py-2 text-sm md:text-base font-black"
-                                    value={game.score2}
-                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'score2', parseInt(e.target.value) || 0)}
-                                    disabled={game.confirmed}
-                                  />
-                                  <select 
-                                    className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
-                                    value={game.team2}
-                                    onChange={(e) => updateCustomGame(selectedExample, gameIdx, 'team2', parseInt(e.target.value))}
-                                    disabled={game.confirmed}
-                                  >
-                                    {example.map((_, tIdx) => (
-                                      <option key={tIdx} value={tIdx}>TEAM {tIdx + 1}</option>
-                                    ))}
-                                  </select>
-                                </div>
-                                
-                                {!game.confirmed ? (
-                                  <div className="flex justify-center">
-                                    <button 
-                                      onClick={() => confirmGame(selectedExample, gameIdx)}
-                                      className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs font-black uppercase tracking-wider transition-all"
-                                    >
-                                      ✓ CONFIRM RESULT
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col items-center space-y-1">
-                                    <span className={`text-xs font-bold px-2 py-1 rounded ${
-                                      game.score1 > game.score2 ? 'bg-white text-black' :
-                                      game.score1 < game.score2 ? 'bg-gray-800 text-white' :
-                                      'bg-gray-600 text-white'
-                                    }`}>
-                                      {result}
-                                    </span>
-                                    <div className="text-xs text-gray-400 flex space-x-4 uppercase tracking-wider">
-                                      <span className="text-white font-black">W: {
-                                        game.score1 > game.score2 ? '1' : game.score1 < game.score2 ? '0' : '0'
-                                      }</span>
-                                      <span className="text-gray-400 font-black">D: {
-                                        game.score1 === game.score2 ? '1' : '0'
-                                      }</span>
-                                      <span className="text-gray-600 font-black">L: {
-                                        game.score1 < game.score2 ? '1' : game.score1 > game.score2 ? '0' : '0'
-                                      }</span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      {/* Botões Confirmar e Compartilhar */}
+                      <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+                        <button 
+                          onClick={shareTeamsOnWhatsApp}
+                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
+                          style={{ letterSpacing: '0.15em' }}
+                        >
+                          <span className="text-2xl">📱</span>
+                          SHARE ON WHATSAPP
+                        </button>
+                        <button 
+                          onClick={confirmTeams}
+                          className="bg-white hover:bg-gray-100 text-black px-10 py-4 md:px-16 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105"
+                          style={{ letterSpacing: '0.15em' }}
+                        >
+                          ✓ CONFIRM TEAMS
+                        </button>
                       </div>
                     </div>
                   );
                 })()}
               </div>
             )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* VIEW DE MATCH - Timer e Placares */}
+        {!showManager && view === 'match' && confirmedTeams && (
+          <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-8">
+            {/* Header com botão voltar */}
+            <div className="mb-6 flex justify-between items-center">
+              <button 
+                onClick={() => setView('teams')} 
+                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+              >
+                ← BACK TO TEAMS
+              </button>
+            </div>
+
+            <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
+              ⚽ MATCH CONTROL
+            </h2>
+
+            {/* Timer com Preset */}
+            <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 rounded-none p-6 mb-8">
+              <h3 className="text-xl font-black text-white text-center uppercase tracking-wider mb-4">
+                ⏱️ TIMER
+              </h3>
+              
+              {/* Seletor de Tempo */}
+              <div className="flex justify-center gap-3 mb-6">
+                <button
+                  onClick={() => setPresetTime(5)}
+                  className={`px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all ${
+                    timerPreset === 300
+                      ? 'bg-white text-black'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  5 MIN
+                </button>
+                <button
+                  onClick={() => setPresetTime(10)}
+                  className={`px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all ${
+                    timerPreset === 600
+                      ? 'bg-white text-black'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  10 MIN
+                </button>
+                <button
+                  onClick={() => setTimerPreset(null)}
+                  className={`px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all ${
+                    timerPreset === null
+                      ? 'bg-white text-black'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  FREE
+                </button>
+              </div>
+
+              <div className="text-center mb-6">
+                <div className="text-6xl md:text-8xl font-black text-white mb-2" style={{ fontFamily: 'monospace' }}>
+                  {formatTime(timerSeconds)}
+                </div>
+                {timerPreset && (
+                  <div className="text-sm text-gray-400 uppercase tracking-wider">
+                    / {formatTime(timerPreset)}
+                  </div>
+                )}
+                <div className="flex justify-center gap-3 mt-4">
+                  {!timerRunning ? (
+                    <button
+                      onClick={startTimer}
+                      className="bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                    >
+                      ▶ START
+                    </button>
+                  ) : (
+                    <button
+                      onClick={pauseTimer}
+                      className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                    >
+                      ⏸ PAUSE
+                    </button>
+                  )}
+                  <button
+                    onClick={resetTimer}
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                  >
+                    ↻ RESET
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Match Scores */}
+            <div className="bg-gray-900 rounded-none p-6 border border-gray-800">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">📊 MATCH SCORES</h4>
+                <button 
+                  onClick={() => addCustomGame(0)} 
+                  className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs md:text-sm font-bold uppercase tracking-wider transition-all"
+                >
+                  + ADD MATCH
+                </button>
+              </div>
+              <div className="space-y-3">
+                {(customGames[0] || []).map((game, gameIdx) => {
+                  const result = game.score1 > game.score2 ? `TEAM ${game.team1 + 1} WINS` : 
+                                game.score1 < game.score2 ? `TEAM ${game.team2 + 1} WINS` : 
+                                'DRAW';
+                  return (
+                    <div key={gameIdx} className="bg-black border border-gray-700 p-3 rounded-none">
+                      <div className="flex items-center justify-center space-x-2 md:space-x-3 mb-3">
+                        <select 
+                          className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
+                          value={game.team1}
+                          onChange={(e) => updateCustomGame(0, gameIdx, 'team1', parseInt(e.target.value))}
+                          disabled={game.confirmed}
+                        >
+                          {confirmedTeams.map((_, tIdx) => (
+                            <option key={tIdx} value={tIdx}>TEAM {tIdx + 1}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="0"
+                          className="w-10 md:w-14 text-center border-2 border-gray-600 bg-black text-white rounded-none px-2 py-2 text-sm md:text-base font-black"
+                          value={game.score1}
+                          onChange={(e) => updateCustomGame(0, gameIdx, 'score1', parseInt(e.target.value) || 0)}
+                          disabled={game.confirmed}
+                        />
+                        <span className="text-sm md:text-lg text-white font-black">×</span>
+                        <input
+                          type="number"
+                          min="0"
+                          className="w-10 md:w-14 text-center border-2 border-gray-600 bg-black text-white rounded-none px-2 py-2 text-sm md:text-base font-black"
+                          value={game.score2}
+                          onChange={(e) => updateCustomGame(0, gameIdx, 'score2', parseInt(e.target.value) || 0)}
+                          disabled={game.confirmed}
+                        />
+                        <select 
+                          className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
+                          value={game.team2}
+                          onChange={(e) => updateCustomGame(0, gameIdx, 'team2', parseInt(e.target.value))}
+                          disabled={game.confirmed}
+                        >
+                          {confirmedTeams.map((_, tIdx) => (
+                            <option key={tIdx} value={tIdx}>TEAM {tIdx + 1}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {!game.confirmed ? (
+                        <div className="flex justify-center">
+                          <button 
+                            onClick={() => confirmGame(0, gameIdx)}
+                            className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs font-black uppercase tracking-wider transition-all"
+                          >
+                            ✓ CONFIRM RESULT
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center space-y-1">
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${
+                            game.score1 > game.score2 ? 'bg-white text-black' :
+                            game.score1 < game.score2 ? 'bg-gray-800 text-white' :
+                            'bg-gray-600 text-white'
+                          }`}>
+                            {result}
+                          </span>
+                          <div className="text-xs text-gray-400 flex space-x-4 uppercase tracking-wider">
+                            <span className="text-white font-black">W: {
+                              game.score1 > game.score2 ? '1' : game.score1 < game.score2 ? '0' : '0'
+                            }</span>
+                            <span className="text-gray-400 font-black">D: {
+                              game.score1 === game.score2 ? '1' : '0'
+                            }</span>
+                            <span className="text-gray-600 font-black">L: {
+                              game.score1 < game.score2 ? '1' : game.score1 > game.score2 ? '0' : '0'
+                            }</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
