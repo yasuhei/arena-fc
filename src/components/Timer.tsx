@@ -7,7 +7,7 @@ interface TimerProps {
 export const Timer = ({ onTimeEnd }: TimerProps) => {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
-  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [timerInterval, setTimerInterval] = useState<number | null>(null);
   const [timerPreset, setTimerPreset] = useState<number | null>(null);
 
   const playWhistle = () => {
@@ -21,7 +21,7 @@ export const Timer = ({ onTimeEnd }: TimerProps) => {
       setTimerRunning(true);
       const interval = setInterval(() => {
         setTimerSeconds(prev => prev + 1);
-      }, 1000);
+      }, 1000) as unknown as number;
       setTimerInterval(interval);
     }
   };

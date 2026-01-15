@@ -121,7 +121,7 @@ function App() {
   // Estados do timer
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
-  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [timerInterval, setTimerInterval] = useState<number | null>(null);
   const [timerPreset, setTimerPreset] = useState<number | null>(null); // 5 ou 10 minutos (em segundos: 300 ou 600)
 
   const handleCheck = (playerId: string, checked: boolean) => {
@@ -231,7 +231,7 @@ function App() {
       setTimerRunning(true);
       const interval = setInterval(() => {
         setTimerSeconds(prev => prev + 1);
-      }, 1000);
+      }, 1000) as unknown as number;
       setTimerInterval(interval);
     }
   };
