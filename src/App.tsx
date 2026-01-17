@@ -107,7 +107,7 @@ function createBalancedTeams(selected: Set<string>, players: Player[]): Player[]
 }
 
 function App() {
-  const { players, loading, error, addPlayer, updatePlayer, removePlayer } = usePlayers();
+  const { players, loading, error, isOffline, addPlayer, updatePlayer, removePlayer, syncWithBackend } = usePlayers();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [teams, setTeams] = useState<Player[][][]>([]);
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
@@ -398,6 +398,31 @@ function App() {
           <p className="text-center text-gray-400 text-xs md:text-sm mt-2 tracking-wide uppercase">
             Performance • Balance • Victory
           </p>
+          
+          {/* Status de Conexão */}
+          {isOffline && (
+            <div className="text-center mt-3">
+              <div className="inline-flex items-center space-x-2 bg-yellow-600 text-white px-4 py-2 rounded-none text-xs uppercase tracking-wider">
+                <span>📡</span>
+                <span>Modo Offline - Dados salvos localmente</span>
+                <button 
+                  onClick={syncWithBackend}
+                  className="ml-2 bg-yellow-700 hover:bg-yellow-800 px-2 py-1 rounded-none text-xs transition-all"
+                >
+                  Reconectar
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {error && !isOffline && (
+            <div className="text-center mt-3">
+              <div className="inline-flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-none text-xs uppercase tracking-wider">
+                <span>⚠️</span>
+                <span>{error}</span>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
