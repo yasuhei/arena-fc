@@ -720,7 +720,7 @@ function App() {
                 <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                   <button 
                     onClick={shareTeamsOnWhatsApp}
-                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
                     style={{ letterSpacing: '0.15em' }}
                   >
                     <span className="text-2xl">📱</span>
@@ -840,7 +840,7 @@ function App() {
                       <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                         <button 
                           onClick={shareTeamsOnWhatsApp}
-                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
+                          className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
                           style={{ letterSpacing: '0.15em' }}
                         >
                           <span className="text-2xl">📱</span>
