@@ -3,42 +3,46 @@ import { usePlayers, Player } from './hooks/usePlayers';
 import { PlayerManager } from './components/PlayerManager';
 import AdBanner from './components/AdBanner';
 import AdSenseScript from './components/AdSenseScript';
-import SessionInfo from './components/SessionInfo';
 import { ADSENSE_CONFIG } from './config/adsense';
 
-// Função para renderizar estrelas com meio ponto
-const renderStars = (rating: number, size: string = 'text-lg') => {
-  const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 !== 0;
-  
-  // Estrelas cheias (baseado na parte inteira da nota)
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(
-      <span key={`full-${i}`} className={`${size} text-yellow-500`}>⭐</span>
+// Função para renderizar rating com barra de progresso compacta
+const renderRatingBarCompact = (rating: number) => {
+  if (rating === 0) {
+    return (
+      <div className="flex items-center space-x-1">
+        <div className="w-16 h-2 bg-gray-700 rounded-sm border border-gray-600 overflow-hidden">
+          <div className="h-full bg-gray-500 rounded-sm" style={{ width: '0%' }}></div>
+        </div>
+        <span className="text-xs font-black text-gray-500">--</span>
+      </div>
     );
   }
+
+  const percentage = (rating / 5) * 100;
   
-  // Meia estrela se tiver decimal (ex: 2.5 = 2 cheias + 1 meia)
-  if (hasHalfStar) {
-    stars.push(
-      <span key="half" className={`${size} text-yellow-400`}>⭐</span>
-    );
-  }
-  
-  // Estrelas vazias para completar até 5
-  const usedStars = fullStars + (hasHalfStar ? 1 : 0);
-  const emptyStars = 5 - usedStars;
-  for (let i = 0; i < emptyStars; i++) {
-    stars.push(
-      <span key={`empty-${i}`} className={`${size} text-gray-300`}>☆</span>
-    );
-  }
-  
-  return stars;
+  const getColor = (rating: number) => {
+    if (rating >= 0.1 && rating <= 0.9) return 'bg-red-500';
+    if (rating >= 1.0 && rating <= 1.9) return 'bg-orange-500';
+    if (rating >= 2.0 && rating <= 2.9) return 'bg-yellow-500';
+    if (rating >= 3.0 && rating <= 3.9) return 'bg-blue-500';
+    if (rating >= 4.0 && rating <= 5.0) return 'bg-green-500';
+    return 'bg-gray-500';
+  };
+
+  return (
+    <div className="flex items-center space-x-1">
+      <div className="w-16 h-2 bg-gray-700 rounded-sm border border-gray-600 overflow-hidden">
+        <div 
+          className={`h-full ${getColor(rating)} rounded-sm transition-all duration-500 ease-out`}
+          style={{ width: `${percentage}%` }}
+        ></div>
+      </div>
+      <span className="text-xs font-black text-white">{rating.toFixed(1)}</span>
+    </div>
+  );
 };
 
-function createBalancedTeams(selected: Set<string>, players: Player[]): Player[][] {
+function createBalancedTeams(selected: Set<string>, players: Player[], variation: number = 0): Player[][] {
   const available = players.filter(p => selected.has(p.id));
   const total = available.length;
   if (total < 6) return [];
@@ -66,10 +70,64 @@ function createBalancedTeams(selected: Set<string>, players: Player[]): Player[]
 
   const teams: Player[][] = Array.from({ length: numTeams }, () => []);
 
-  // Ordenar jogadores por nota (do maior para o menor)
-  const sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
+  // Criar diferentes variações de balanceamento
+  let sortedPlayers: Player[];
+  
+  if (variation === 0) {
+    // Variação 1: Ordenação por rating (do maior para o menor)
+    sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
+  } else if (variation === 1) {
+    // Variação 2: Embaralhar jogadores de alto nível primeiro
+    const highRated = available.filter(p => p.rating >= 3.5);
+    const midRated = available.filter(p => p.rating >= 2.0 && p.rating < 3.5);
+    const lowRated = available.filter(p => p.rating < 2.0);
+    
+    // Embaralhar cada grupo
+    const shuffleArray = (array: Player[]) => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+    
+    sortedPlayers = [
+      ...shuffleArray(highRated).sort((a, b) => b.rating - a.rating),
+      ...shuffleArray(midRated).sort((a, b) => b.rating - a.rating),
+      ...shuffleArray(lowRated).sort((a, b) => b.rating - a.rating)
+    ];
+  } else {
+    // Variação 3: Distribuição alternada (serpentina)
+    sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
+    
+    // Distribuir em padrão serpentina (1,2,3,3,2,1,1,2,3...)
+    const serpentineTeams: Player[][] = Array.from({ length: numTeams }, () => []);
+    let currentTeam = 0;
+    let direction = 1; // 1 para frente, -1 para trás
+    
+    for (const player of sortedPlayers) {
+      if (serpentineTeams[currentTeam].length < teamSize) {
+        serpentineTeams[currentTeam].push(player);
+      }
+      
+      // Mover para próximo time
+      currentTeam += direction;
+      
+      // Inverter direção quando chegar no fim
+      if (currentTeam >= numTeams) {
+        currentTeam = numTeams - 1;
+        direction = -1;
+      } else if (currentTeam < 0) {
+        currentTeam = 0;
+        direction = 1;
+      }
+    }
+    
+    return serpentineTeams.filter(team => team.length > 0);
+  }
 
-  // Distribuir jogadores de forma balanceada
+  // Distribuir jogadores de forma balanceada (para variações 0 e 1)
   // Algoritmo: sempre adicionar ao time com menor soma de notas
   for (const player of sortedPlayers) {
     // Calcular soma das notas de cada time
@@ -107,7 +165,7 @@ function createBalancedTeams(selected: Set<string>, players: Player[]): Player[]
 }
 
 function App() {
-  const { players, loading, error, isOffline, addPlayer, updatePlayer, removePlayer, syncWithBackend } = usePlayers();
+  const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [teams, setTeams] = useState<Player[][][]>([]);
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
@@ -135,7 +193,7 @@ function App() {
     if (creationMode === 'auto') {
       const examples: Player[][][] = [];
       for (let i = 0; i < 3; i++) {
-        const teamExample = createBalancedTeams(selected, players);
+        const teamExample = createBalancedTeams(selected, players, i);
         examples.push(teamExample);
       }
       setTeams(examples);
@@ -345,18 +403,6 @@ function App() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-red-500 to-red-700 flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="text-2xl font-bold mb-4">Erro ao conectar com o servidor</div>
-          <div className="text-lg">{error}</div>
-          <div className="text-sm mt-4">Certifique-se de que o backend está rodando na porta 3001</div>
-        </div>
-      </div>
-    );
-  }
-
 
 
   return (
@@ -398,31 +444,6 @@ function App() {
           <p className="text-center text-gray-400 text-xs md:text-sm mt-2 tracking-wide uppercase">
             Performance • Balance • Victory
           </p>
-          
-          {/* Status de Conexão */}
-          {isOffline && (
-            <div className="text-center mt-3">
-              <div className="inline-flex items-center space-x-2 bg-yellow-600 text-white px-4 py-2 rounded-none text-xs uppercase tracking-wider">
-                <span>📡</span>
-                <span>Modo Offline - Dados salvos localmente</span>
-                <button 
-                  onClick={syncWithBackend}
-                  className="ml-2 bg-yellow-700 hover:bg-yellow-800 px-2 py-1 rounded-none text-xs transition-all"
-                >
-                  Reconectar
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {error && !isOffline && (
-            <div className="text-center mt-3">
-              <div className="inline-flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-none text-xs uppercase tracking-wider">
-                <span>⚠️</span>
-                <span>{error}</span>
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
@@ -534,10 +555,8 @@ function App() {
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm md:text-base text-white truncate uppercase tracking-wide">{player.name}</p>
                         <div className="flex items-center space-x-1 mt-1">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider">Rating:</p>
-                          <div className="flex items-center">
-                            {renderStars(player.rating, 'text-xs')}
-                            <span className="text-xs font-black text-white ml-1">({player.rating})</span>
+                          <div className="flex items-center justify-center mt-1">
+                            {renderRatingBarCompact(player.rating)}
                           </div>
                         </div>
                       </div>
@@ -627,9 +646,8 @@ function App() {
                         <div key={player.id} className="bg-black border border-gray-600 rounded-none p-3 flex items-center justify-between">
                           <div>
                             <p className="font-black text-white text-sm uppercase">{player.name}</p>
-                            <div className="flex items-center space-x-1 mt-1">
-                              {renderStars(player.rating, 'text-xs')}
-                              <span className="text-xs font-black text-gray-400">({player.rating})</span>
+                            <div className="flex items-center justify-center mt-1">
+                              {renderRatingBarCompact(player.rating)}
                             </div>
                           </div>
                           <div className="flex gap-1">
@@ -662,7 +680,7 @@ function App() {
                               TEAM {teamIdx + 1}
                             </h4>
                             <div className="text-xs text-gray-400 space-x-3">
-                              <span className="text-white font-black">Total: {teamRatingSum}</span>
+                              <span className="text-white font-black">Total: {teamRatingSum.toFixed(2)}</span>
                               <span className="text-white font-black">Avg: {teamAverage}</span>
                             </div>
                           </div>
@@ -671,9 +689,8 @@ function App() {
                               <div key={player.id} className="bg-gray-900 border border-gray-700 rounded-none p-2 flex items-center justify-between">
                                 <div>
                                   <p className="font-black text-white text-sm uppercase">{player.name}</p>
-                                  <div className="flex items-center space-x-1 mt-1">
-                                    {renderStars(player.rating, 'text-xs')}
-                                    <span className="text-xs font-black text-gray-400">({player.rating})</span>
+                                  <div className="flex items-center justify-center mt-1">
+                                    {renderRatingBarCompact(player.rating)}
                                   </div>
                                 </div>
                                 <div className="flex gap-1">
@@ -746,7 +763,9 @@ function App() {
                 {teams.map((example, idx) => (
                   <div key={idx} className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 hover:border-white rounded-none p-6 cursor-pointer hover:bg-gray-800 transition-all group" onClick={() => setSelectedExample(idx)}>
                     <h3 className="text-lg md:text-xl font-black mb-4 text-center text-white uppercase tracking-wide">
-                      OPTION {idx + 1} • BALANCED DISTRIBUTION
+                      {idx === 0 && 'OPTION 1 • RATING PRIORITY'}
+                      {idx === 1 && 'OPTION 2 • MIXED SHUFFLE'}
+                      {idx === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
                     </h3>
                     <div className="flex space-x-2 overflow-x-auto pb-2 justify-center">
                       {example.map((team, tIdx) => {
@@ -761,7 +780,7 @@ function App() {
                             <div className="text-center bg-gray-900 p-2 mt-2">
                               <div className="text-xs text-gray-400 space-y-1">
                                 <div className="uppercase tracking-wide">{team.length} Players</div>
-                                <div className="text-white font-bold text-sm">Total: {teamRatingSum}</div>
+                                <div className="text-white font-bold text-sm">Total: {teamRatingSum.toFixed(2)}</div>
                                 <div className="text-white font-bold text-sm">Avg: {teamAverage}</div>
                               </div>
                             </div>
@@ -786,7 +805,9 @@ function App() {
                   return (
                     <div>
                       <h3 className="text-xl font-black mb-6 text-center text-white bg-gray-900 py-3 rounded-none uppercase tracking-wide">
-                        OPTION {selectedExample + 1} • BALANCED DISTRIBUTION
+                        {selectedExample === 0 && 'OPTION 1 • RATING PRIORITY'}
+                        {selectedExample === 1 && 'OPTION 2 • MIXED SHUFFLE'}
+                        {selectedExample === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
                       </h3>
                       <div className="flex space-x-1 overflow-x-auto pb-2 justify-center mb-6">
                         {example.map((team, tIdx) => {
@@ -804,10 +825,9 @@ function App() {
                                     <div className="flex items-center justify-between gap-1">
                                       <div className="flex-1 min-w-0">
                                         <span className="font-bold truncate block text-xs text-white uppercase">{player.name}</span>
-                                        <div className="flex items-center justify-center mt-0.5">
-                                          {renderStars(player.rating, 'text-xs')}
+                                        <div className="flex items-center justify-center mt-1">
+                                          {renderRatingBarCompact(player.rating)}
                                         </div>
-                                        <span className="text-xs font-black text-center block text-gray-400">({player.rating})</span>
                                       </div>
                                       <div className="flex flex-col gap-0.5">
                                         {example.map((_, targetIdx) => targetIdx !== tIdx && (
@@ -827,7 +847,7 @@ function App() {
                               </ul>
                               <div className="mt-2 text-center bg-gray-900 p-2">
                                 <div className="text-xs text-gray-400 space-y-1">
-                                  <div className="uppercase tracking-wide">Total: <span className="font-black text-white">{teamRatingSum}</span></div>
+                                  <div className="uppercase tracking-wide">Total: <span className="font-black text-white">{teamRatingSum.toFixed(2)}</span></div>
                                   <div className="uppercase tracking-wide">Avg: <span className="font-black text-white">{teamAverage}</span></div>
                                 </div>
                               </div>
@@ -1097,9 +1117,6 @@ function App() {
           </div>
         </footer>
       </div>
-      
-      {/* Informações da sessão (só em desenvolvimento) */}
-      <SessionInfo />
     </div>
   );
 }
