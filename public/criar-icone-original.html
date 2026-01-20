@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Criar Ícone Original - Sem Panela FC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #000;
+            color: white;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .instructions {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .download-btn {
+            background: #ffd700;
+            color: #000;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        .download-btn:hover {
+            background: #ffed4e;
+        }
+
+        canvas {
+            border: 2px solid #ffd700;
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        .preview {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 Criar Ícone Original - Sem Panela FC</h1>
+
+        <div class="instructions">
+            <h3>📋 Instruções:</h3>
+            <ol>
+                <li><strong>Clique no botão</strong> "Criar Ícone Original" abaixo</li>
+                <li><strong>Será gerado</strong> um ícone baseado na sua imagem</li>
+                <li><strong>Clique "Download"</strong> para salvar como PNG</li>
+                <li><strong>Salve como:</strong> <code>sem-panela-fc-icon.png</code></li>
+                <li><strong>Coloque na pasta:</strong> <code>public/</code></li>
+                <li><strong>Recarregue</strong> o site e teste!</li>
+            </ol>
+        </div>
+
+        <button onclick="createOriginalIcon()" class="download-btn">
+            🎨 CRIAR ÍCONE ORIGINAL
+        </button>
+
+        <div id="preview" class="preview"></div>
+
+        <div class="instructions">
+            <h3>🔧 Se não funcionar:</h3>
+            <ol>
+                <li><strong>Salve manualmente</strong> a imagem que você me enviou</li>
+                <li><strong>Renomeie para:</strong> <code>sem-panela-fc-icon.png</code></li>
+                <li><strong>Coloque em:</strong> <code>public/sem-panela-fc-icon.png</code></li>
+                <li><strong>Limpe cache:</strong> F12 → Application → Clear storage</li>
+                <li><strong>Recarregue:</strong> Ctrl+F5</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function createOriginalIcon() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // Background preto
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Bola dourada (baseada na sua imagem)
+            const ballX = 200;
+            const ballY = 220;
+            const ballRadius = 85;
+
+            // Gradiente dourado realista
+            const ballGradient = ctx.createRadialGradient(ballX - 30, ballY - 30, 0, ballX, ballY, ballRadius);
+            ballGradient.addColorStop(0, '#ffd700');
+            ballGradient.addColorStop(0.3, '#ffed4e');
+            ballGradient.addColorStop(0.7, '#ffb000');
+            ballGradient.addColorStop(1, '#cc8800');
+
+            ctx.fillStyle = ballGradient;
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Contorno da bola
+            ctx.strokeStyle = '#cc8800';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Padrão de futebol
+            ctx.strokeStyle = '#2a2a2a';
+            ctx.lineWidth = 3;
+            ctx.fillStyle = '#2a2a2a';
+
+            // Pentágono central
+            ctx.beginPath();
+            const pentPoints = [];
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                const x = ballX + Math.cos(angle) * 25;
+                const y = ballY + Math.sin(angle) * 25;
+                pentPoints.push([x, y]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Hexágonos ao redor (simplificados)
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                const hexX = ballX + Math.cos(angle) * 50;
+                const hexY = ballY + Math.sin(angle) * 50;
+
+                ctx.beginPath();
+                for (let j = 0; j < 6; j++) {
+                    const hexAngle = (j * 2 * Math.PI) / 6;
+                    const x = hexX + Math.cos(hexAngle) * 15;
+                    const y = hexY + Math.sin(hexAngle) * 15;
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // Brilho na bola
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(ballX - 25, ballY - 25, 20, 30, -0.3, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Panela cortando
+            const panX = 300;
+            const panY = 250;
+
+            // Corpo da panela
+            const panGradient = ctx.createLinearGradient(panX - 50, panY - 30, panX + 50, panY + 30);
+            panGradient.addColorStop(0, '#4a4a4a');
+            panGradient.addColorStop(0.5, '#2a2a2a');
+            panGradient.addColorStop(1, '#1a1a1a');
+
+            ctx.fillStyle = panGradient;
+            ctx.beginPath();
+            ctx.ellipse(panX, panY, 70, 50, 0, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Borda da panela
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.ellipse(panX, panY - 25, 72, 15, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cabo da panela
+            ctx.fillStyle = '#333';
+            ctx.fillRect(panX + 60, panY - 10, 60, 20);
+            ctx.strokeRect(panX + 60, panY - 10, 60, 20);
+
+            // Ponta do cabo
+            ctx.beginPath();
+            ctx.arc(panX + 125, panY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Efeitos de impacto
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 6;
+            ctx.globalAlpha = 0.9;
+
+            // Linha principal de impacto
+            ctx.beginPath();
+            ctx.moveTo(150, 180);
+            ctx.quadraticCurveTo(250, 200, 350, 160);
+            ctx.stroke();
+
+            // Linha secundária
+            ctx.lineWidth = 4;
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(160, 200);
+            ctx.quadraticCurveTo(260, 220, 360, 180);
+            ctx.stroke();
+
+            ctx.globalAlpha = 1;
+
+            // Estrelas de impacto
+            ctx.fillStyle = '#ffd700';
+            drawStar(ctx, 340, 140, 12, 4);
+            drawStar(ctx, 370, 170, 8, 4);
+            drawStar(ctx, 320, 120, 6, 4);
+
+            // Faíscas
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(310, 170, 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(330, 150, 3, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Texto
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.font = 'bold 42px Arial';
+            ctx.textAlign = 'center';
+
+            // Sombra do texto
+            ctx.fillStyle = '#333';
+            ctx.fillText('Sem Panela', 256, 422);
+            ctx.fillText('FC', 256, 472);
+
+            // Texto principal
+            ctx.fillStyle = '#fff';
+            ctx.strokeText('Sem Panela', 256, 420);
+            ctx.fillText('Sem Panela', 256, 420);
+            ctx.strokeText('FC', 256, 470);
+            ctx.fillText('FC', 256, 470);
+
+            // Mostrar preview
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '<h3>🎨 Ícone Criado:</h3>';
+            preview.appendChild(canvas);
+
+            // Botão de download
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = '💾 DOWNLOAD ÍCONE';
+            downloadBtn.className = 'download-btn';
+            downloadBtn.style.fontSize = '18px';
+            downloadBtn.onclick = () => downloadCanvas(canvas, 'sem-panela-fc-icon.png');
+            preview.appendChild(downloadBtn);
+        }
+
+        function drawStar(ctx, x, y, radius, points) {
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                const angle = (i * Math.PI) / points;
+                const r = i % 2 === 0 ? radius : radius * 0.5;
+                const px = x + Math.cos(angle) * r;
+                const py = y + Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+
+            alert('✅ Ícone baixado!\n\n📁 Salve como: sem-panela-fc-icon.png\n📂 Na pasta: public/\n🔄 Depois recarregue o site!');
+        }
+    </script>
+</body>
+
+</html>

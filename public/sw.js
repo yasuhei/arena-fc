@@ -1,8 +1,9 @@
-const CACHE_NAME = 'sem-panela-fc-v1.0.0';
+const CACHE_NAME = 'sem-panela-fc-v1.1.0';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/sem-panela-fc-icon.png',
   '/icon.svg'
 ];
 

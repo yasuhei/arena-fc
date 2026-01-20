@@ -22,22 +22,28 @@
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-192x192.png",
+            "src": "/sem-panela-fc-icon.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-512x512.png",
-            "sizes": "512x512",
+            "src": "/sem-panela-fc-icon.png",
+            "sizes": "144x144",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icon.svg",
-            "sizes": "any",
-            "type": "image/svg+xml",
-            "purpose": "any"
+            "src": "/sem-panela-fc-icon.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/sem-panela-fc-icon.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ],
     "shortcuts": [
@@ -48,7 +54,7 @@
             "url": "/?view=manage",
             "icons": [
                 {
-                    "src": "/icon.svg",
+                    "src": "/sem-panela-fc-icon.png",
                     "sizes": "96x96"
                 }
             ]
