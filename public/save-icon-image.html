@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Salvar Ícone - Sem Panela FC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #000;
+            color: white;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .icon-preview {
+            margin: 20px 0;
+        }
+
+        .icon-preview img {
+            max-width: 512px;
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+        }
+
+        .instructions {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .download-section {
+            margin: 30px 0;
+        }
+
+        .download-btn {
+            background: #ffd700;
+            color: #000;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        .download-btn:hover {
+            background: #ffed4e;
+        }
+
+        canvas {
+            border: 2px solid #ffd700;
+            margin: 10px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 Salvar Ícone Original - Sem Panela FC</h1>
+
+        <div class="instructions">
+            <h3>📋 Como usar a imagem original:</h3>
+            <ol>
+                <li><strong>Salve a imagem original</strong> que você enviou como "sem-panela-fc-icon.png"</li>
+                <li><strong>Coloque na pasta</strong> <code>public/</code> do projeto</li>
+                <li><strong>Ou use os ícones gerados</strong> abaixo baseados na sua imagem</li>
+                <li><strong>Os ícones serão atualizados</strong> automaticamente no PWA</li>
+            </ol>
+        </div>
+
+        <div class="download-section">
+            <h2>🎨 Ícones Gerados Baseados na Sua Imagem</h2>
+            <p>Clique nos botões abaixo para baixar os ícones nos tamanhos necessários:</p>
+
+            <div id="icons-container"></div>
+
+            <button onclick="downloadAll()" class="download-btn" style="font-size: 18px; padding: 20px 40px;">
+                📦 BAIXAR TODOS OS ÍCONES
+            </button>
+        </div>
+
+        <div class="instructions">
+            <h3>🔧 Próximos passos:</h3>
+            <ol>
+                <li>Baixe todos os ícones gerados</li>
+                <li>Salve na pasta <code>public/icons/</code></li>
+                <li>O PWA será atualizado automaticamente</li>
+                <li>Teste a instalação para ver o novo ícone</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Dados da imagem base64 (você pode colar aqui a imagem convertida)
+        const baseImageData = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`;
+
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const container = document.getElementById('icons-container');
+        const canvases = [];
+
+        // Função para criar ícone baseado na imagem original
+        function createIconFromImage(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background preto
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, size);
+
+            // Simular o design da imagem original
+            // Bola dourada
+            const ballX = size * 0.4;
+            const ballY = size * 0.43;
+            const ballRadius = size * 0.17;
+
+            // Gradiente dourado para a bola
+            const ballGradient = ctx.createRadialGradient(ballX - ballRadius * 0.3, ballY - ballRadius * 0.3, 0, ballX, ballY, ballRadius);
+            ballGradient.addColorStop(0, '#ffd700');
+            ballGradient.addColorStop(0.5, '#ffb000');
+            ballGradient.addColorStop(1, '#cc8800');
+
+            ctx.fillStyle = ballGradient;
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Padrão da bola
+            ctx.strokeStyle = '#2a2a2a';
+            ctx.lineWidth = size * 0.005;
+
+            // Pentágono central
+            const pentSize = ballRadius * 0.4;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                const x = ballX + Math.cos(angle) * pentSize;
+                const y = ballY + Math.sin(angle) * pentSize;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fill();
+
+            // Panela
+            const panX = size * 0.55;
+            const panY = size * 0.5;
+            const panWidth = size * 0.18;
+            const panHeight = size * 0.13;
+
+            // Gradiente da panela
+            const panGradient = ctx.createLinearGradient(panX - panWidth, panY - panHeight, panX + panWidth, panY + panHeight);
+            panGradient.addColorStop(0, '#4a4a4a');
+            panGradient.addColorStop(0.5, '#2a2a2a');
+            panGradient.addColorStop(1, '#1a1a1a');
+
+            ctx.fillStyle = panGradient;
+            ctx.beginPath();
+            ctx.ellipse(panX, panY, panWidth, panHeight, 0, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Cabo da panela
+            ctx.fillRect(panX + panWidth * 0.8, panY - size * 0.02, size * 0.15, size * 0.04);
+
+            // Efeitos de impacto
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = size * 0.008;
+            ctx.globalAlpha = 0.8;
+
+            // Linha de impacto
+            ctx.beginPath();
+            ctx.moveTo(size * 0.3, size * 0.35);
+            ctx.quadraticCurveTo(size * 0.5, size * 0.4, size * 0.7, size * 0.32);
+            ctx.stroke();
+
+            // Estrelas de impacto
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#ffd700';
+
+            // Estrela 1
+            drawStar(ctx, size * 0.67, size * 0.28, size * 0.02, 4);
+            // Estrela 2
+            drawStar(ctx, size * 0.72, size * 0.33, size * 0.015, 4);
+
+            // Texto
+            if (size >= 128) {
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = size * 0.002;
+                ctx.font = `bold ${size * 0.09}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Sombra
+                ctx.fillStyle = '#333';
+                ctx.fillText('Sem Panela', size / 2 + 2, size * 0.82 + 2);
+                ctx.fillText('FC', size / 2 + 2, size * 0.92 + 2);
+
+                // Texto principal
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeText('Sem Panela', size / 2, size * 0.82);
+                ctx.fillText('Sem Panela', size / 2, size * 0.82);
+                ctx.strokeText('FC', size / 2, size * 0.92);
+                ctx.fillText('FC', size / 2, size * 0.92);
+            }
+
+            return canvas;
+        }
+
+        function drawStar(ctx, x, y, radius, points) {
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                const angle = (i * Math.PI) / points;
+                const r = i % 2 === 0 ? radius : radius * 0.5;
+                const px = x + Math.cos(angle) * r;
+                const py = y + Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Gerar todos os ícones
+        sizes.forEach(size => {
+            const canvas = createIconFromImage(size);
+
+            const div = document.createElement('div');
+            div.style.display = 'inline-block';
+            div.style.margin = '10px';
+            div.style.textAlign = 'center';
+
+            const title = document.createElement('h4');
+            title.textContent = `${size}x${size}px`;
+            title.style.color = '#ffd700';
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Download';
+            downloadBtn.className = 'download-btn';
+            downloadBtn.onclick = () => downloadCanvas(canvas, `icon-${size}x${size}.png`);
+
+            div.appendChild(title);
+            div.appendChild(canvas);
+            div.appendChild(downloadBtn);
+
+            container.appendChild(div);
+            canvases.push({ canvas, size });
+        });
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function downloadAll() {
+            canvases.forEach(({ canvas, size }, index) => {
+                setTimeout(() => {
+                    downloadCanvas(canvas, `icon-${size}x${size}.png`);
+                }, index * 300);
+            });
+        }
+    </script>
+</body>
+
+</html>

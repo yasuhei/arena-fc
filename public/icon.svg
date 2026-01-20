@@ -1,23 +1,127 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="512" height="512" fill="#1a1a1a"/>
+  <defs>
+    <!-- Gradientes para a bola dourada -->
+    <radialGradient id="ballGradient" cx="40%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffb000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#cc8800;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Gradiente para a panela -->
+    <linearGradient id="panGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2a2a2a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para o cabo -->
+    <linearGradient id="handleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#666;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#333;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#111;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Filtro de brilho -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
   
-  <!-- Circle background -->
-  <circle cx="256" cy="256" r="200" fill="#ffffff"/>
+  <!-- Background preto -->
+  <rect width="512" height="512" fill="#000000"/>
   
-  <!-- Soccer ball pattern -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#1a1a1a" stroke-width="8"/>
+  <!-- Efeitos de impacto/explosão (atrás) -->
+  <g opacity="0.8">
+    <!-- Raios de impacto -->
+    <path d="M 280 200 L 320 160 L 310 170 L 290 190 Z" fill="#ffd700" opacity="0.6"/>
+    <path d="M 320 220 L 360 180 L 350 190 L 330 210 Z" fill="#ffd700" opacity="0.6"/>
+    <path d="M 300 160 L 340 120 L 330 130 L 310 150 Z" fill="#ffd700" opacity="0.6"/>
+    
+    <!-- Estrelas de impacto -->
+    <polygon points="340,140 345,150 355,150 347,157 350,167 340,160 330,167 333,157 325,150 335,150" fill="#ffd700" opacity="0.8"/>
+    <polygon points="370,170 373,176 380,176 375,180 377,187 370,183 363,187 365,180 360,176 367,176" fill="#ffd700" opacity="0.6"/>
+    <polygon points="320,120 322,124 327,124 324,127 325,132 320,129 315,132 316,127 313,124 318,124" fill="#ffd700" opacity="0.7"/>
+    
+    <!-- Partículas -->
+    <circle cx="350" cy="130" r="3" fill="#ffd700" opacity="0.8"/>
+    <circle cx="380" cy="160" r="2" fill="#ffd700" opacity="0.6"/>
+    <circle cx="330" cy="110" r="2" fill="#ffd700" opacity="0.7"/>
+  </g>
   
-  <!-- Pentagon in center -->
-  <polygon points="256,176 286,206 276,246 236,246 226,206" fill="#1a1a1a"/>
+  <!-- Bola de futebol dourada -->
+  <g>
+    <!-- Corpo principal da bola -->
+    <circle cx="200" cy="220" r="85" fill="url(#ballGradient)" stroke="#cc8800" stroke-width="3"/>
+    
+    <!-- Padrão de futebol -->
+    <g stroke="#2a2a2a" stroke-width="2.5" fill="none">
+      <!-- Pentágono central -->
+      <polygon points="200,175 220,185 215,210 185,210 180,185" fill="#2a2a2a"/>
+      
+      <!-- Hexágonos ao redor -->
+      <polygon points="200,175 180,185 160,170 160,145 180,130 200,145"/>
+      <polygon points="200,175 220,185 240,170 240,145 220,130 200,145"/>
+      <polygon points="180,185 185,210 165,235 140,230 135,205 155,180"/>
+      <polygon points="220,185 215,210 235,235 260,230 265,205 245,180"/>
+    </g>
+    
+    <!-- Brilho na bola -->
+    <ellipse cx="180" cy="190" rx="25" ry="35" fill="#fff" opacity="0.3" transform="rotate(-20 180 190)"/>
+  </g>
   
-  <!-- Hexagons around -->
-  <polygon points="256,176 226,206 196,186 196,146 226,126 256,146" fill="none" stroke="#1a1a1a" stroke-width="4"/>
-  <polygon points="256,176 286,206 316,186 316,146 286,126 256,146" fill="none" stroke="#1a1a1a" stroke-width="4"/>
-  <polygon points="226,206 236,246 206,276 166,266 156,226 186,196" fill="none" stroke="#1a1a1a" stroke-width="4"/>
-  <polygon points="286,206 276,246 306,276 346,266 356,226 326,196" fill="none" stroke="#1a1a1a" stroke-width="4"/>
-  <polygon points="236,246 276,246 306,276 276,306 236,306 206,276" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <!-- Panela cortando a bola -->
+  <g>
+    <!-- Corpo da panela -->
+    <ellipse cx="280" cy="250" rx="90" ry="65" fill="url(#panGradient)" stroke="#111" stroke-width="3"/>
+    
+    <!-- Borda superior da panela -->
+    <ellipse cx="280" cy="220" rx="92" ry="20" fill="#555" stroke="#111" stroke-width="2"/>
+    
+    <!-- Cabo da panela -->
+    <rect x="370" y="235" width="80" height="25" rx="12" fill="url(#handleGradient)" stroke="#111" stroke-width="2"/>
+    <rect x="445" y="240" width="15" height="15" rx="7" fill="#333" stroke="#111" stroke-width="1"/>
+    
+    <!-- Detalhes metálicos da panela -->
+    <ellipse cx="280" cy="240" rx="70" ry="45" fill="none" stroke="#666" stroke-width="1" opacity="0.5"/>
+    <ellipse cx="280" cy="220" rx="80" ry="15" fill="#666" opacity="0.3"/>
+  </g>
   
-  <!-- Text -->
-  <text x="256" y="400" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#ffffff">SEM PANELA FC</text>
+  <!-- Efeitos de impacto/corte -->
+  <g>
+    <!-- Linha de impacto principal -->
+    <path d="M 150 180 Q 250 200 350 160" stroke="#ffd700" stroke-width="8" fill="none" opacity="0.9" filter="url(#glow)"/>
+    <path d="M 150 180 Q 250 200 350 160" stroke="#fff" stroke-width="3" fill="none" opacity="0.8"/>
+    
+    <!-- Linhas de velocidade -->
+    <path d="M 320 180 L 380 160" stroke="#ffd700" stroke-width="4" opacity="0.7"/>
+    <path d="M 330 200 L 390 180" stroke="#ffd700" stroke-width="3" opacity="0.6"/>
+    <path d="M 310 160 L 370 140" stroke="#ffd700" stroke-width="3" opacity="0.6"/>
+  </g>
+  
+  <!-- Efeitos de impacto (frente) -->
+  <g opacity="0.9">
+    <!-- Explosão principal -->
+    <polygon points="290,180 300,170 310,180 300,190" fill="#ffd700" opacity="0.8" filter="url(#glow)"/>
+    <polygon points="320,160 330,150 340,160 330,170" fill="#ffd700" opacity="0.7"/>
+    
+    <!-- Faíscas -->
+    <circle cx="310" cy="170" r="4" fill="#fff" opacity="0.9"/>
+    <circle cx="330" cy="150" r="3" fill="#ffd700" opacity="0.8"/>
+    <circle cx="340" cy="180" r="2" fill="#fff" opacity="0.7"/>
+  </g>
+  
+  <!-- Texto "Sem Panela FC" -->
+  <g>
+    <!-- Sombra do texto -->
+    <text x="256" y="420" font-family="Arial Black, Arial" font-size="48" font-weight="900" text-anchor="middle" fill="#333" opacity="0.8">Sem Panela</text>
+    <text x="256" y="470" font-family="Arial Black, Arial" font-size="48" font-weight="900" text-anchor="middle" fill="#333" opacity="0.8">FC</text>
+    
+    <!-- Texto principal -->
+    <text x="256" y="418" font-family="Arial Black, Arial" font-size="48" font-weight="900" text-anchor="middle" fill="#fff" stroke="#ffd700" stroke-width="1">Sem Panela</text>
+    <text x="256" y="468" font-family="Arial Black, Arial" font-size="48" font-weight="900" text-anchor="middle" fill="#fff" stroke="#ffd700" stroke-width="1">FC</text>
+  </g>
 </svg>

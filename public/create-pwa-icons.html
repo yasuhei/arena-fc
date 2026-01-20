@@ -2,12 +2,12 @@
 <html>
 
 <head>
-    <title>Gerador de Ícones PWA - Sem Panela FC</title>
+    <title>Gerador de Ícones PWA - Sem Panela FC (Verde Grama)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
         }
 
         .container {
@@ -31,12 +31,13 @@
         }
 
         canvas {
-            border: 2px solid #ddd;
+            border: 2px solid #22c55e;
             margin: 10px 0;
+            border-radius: 10px;
         }
 
         .download-btn {
-            background: #1a1a1a;
+            background: #16a34a;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -46,16 +47,17 @@
         }
 
         .download-btn:hover {
-            background: #333;
+            background: #15803d;
         }
 
         h1 {
             text-align: center;
-            color: #1a1a1a;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .instructions {
-            background: #e8f4f8;
+            background: rgba(255, 255, 255, 0.9);
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
@@ -65,12 +67,13 @@
 
 <body>
     <div class="container">
-        <h1>⚽ Gerador de Ícones PWA - Sem Panela FC</h1>
+        <h1>⚽ Gerador de Ícones PWA - Sem Panela FC (Verde Grama)</h1>
 
         <div class="instructions">
             <h3>📋 Instruções:</h3>
             <ol>
-                <li>Os ícones são gerados automaticamente abaixo</li>
+                <li>Os ícones são gerados automaticamente com o novo design verde grama</li>
+                <li>Cada ícone mostra uma panela "cortando" uma bola de futebol</li>
                 <li>Clique em "Download" para baixar cada ícone</li>
                 <li>Salve os arquivos na pasta <code>public/icons/</code></li>
                 <li>Os nomes dos arquivos devem ser exatamente como mostrado</li>
@@ -97,6 +100,7 @@
             // Título
             const title = document.createElement('h3');
             title.textContent = `${size}x${size}px`;
+            title.style.color = '#16a34a';
             item.appendChild(title);
 
             // Canvas
@@ -105,42 +109,118 @@
             canvas.height = size;
             const ctx = canvas.getContext('2d');
 
-            // Background preto
-            ctx.fillStyle = '#1a1a1a';
+            // Background verde grama com gradiente
+            const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+            gradient.addColorStop(0, '#4ade80');
+            gradient.addColorStop(1, '#16a34a');
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, size, size);
 
-            // Círculo branco (bola)
-            const centerX = size / 2;
-            const centerY = size / 2;
-            const radius = size * 0.35;
+            // Textura de grama (linhas sutis)
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = size * 0.004;
+            ctx.globalAlpha = 0.3;
+            for (let i = 1; i <= 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, size * i / 5);
+                ctx.lineTo(size, size * i / 5 + (i % 2 === 0 ? size * 0.04 : -size * 0.04));
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+
+            // Bola de futebol (atrás da panela)
+            const ballX = size * 0.55;
+            const ballY = size * 0.55;
+            const ballRadius = size * 0.23;
 
             ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = size * 0.008;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
             ctx.fill();
+            ctx.stroke();
 
-            // Padrão da bola (hexágonos)
-            ctx.strokeStyle = '#1a1a1a';
-            ctx.lineWidth = size * 0.02;
+            // Padrão da bola (simplificado)
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = size * 0.006;
+            ctx.fillStyle = '#000000';
 
             // Pentágono central
-            drawPolygon(ctx, centerX, centerY, radius * 0.3, 5, 0);
+            drawPolygon(ctx, ballX, ballY - ballRadius * 0.3, ballRadius * 0.3, 5, 0);
 
-            // Hexágonos ao redor
-            for (let i = 0; i < 6; i++) {
-                const angle = (i * Math.PI) / 3;
-                const hexX = centerX + Math.cos(angle) * radius * 0.6;
-                const hexY = centerY + Math.sin(angle) * radius * 0.6;
-                drawPolygon(ctx, hexX, hexY, radius * 0.25, 6, angle);
-            }
+            // Panela cortando a bola
+            const panX = size * 0.39;
+            const panY = size * 0.59;
+            const panWidth = size * 0.31;
+            const panHeight = size * 0.23;
 
-            // Texto "FC" pequeno
+            // Corpo da panela (elipse)
+            const panGradient = ctx.createLinearGradient(panX, panY - panHeight / 2, panX, panY + panHeight / 2);
+            panGradient.addColorStop(0, '#6b7280');
+            panGradient.addColorStop(1, '#374151');
+
+            ctx.fillStyle = panGradient;
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = size * 0.006;
+            ctx.beginPath();
+            ctx.ellipse(panX, panY, panWidth / 2, panHeight / 2, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cabo da panela
+            ctx.fillRect(panX - panWidth * 0.8, panY - size * 0.04, size * 0.12, size * 0.08);
+
+            // Tampa da panela
+            ctx.fillStyle = '#9ca3af';
+            ctx.beginPath();
+            ctx.ellipse(panX, panY - panHeight * 0.3, panWidth / 2 + size * 0.01, size * 0.05, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Puxador da tampa
+            ctx.fillStyle = '#6b7280';
+            ctx.beginPath();
+            ctx.arc(panX, panY - panHeight * 0.3, size * 0.015, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Linha de corte (efeito "cortando" a bola)
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = size * 0.012;
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.23, size * 0.63);
+            ctx.lineTo(size * 0.78, size * 0.51);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size * 0.004;
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.23, size * 0.63);
+            ctx.lineTo(size * 0.78, size * 0.51);
+            ctx.stroke();
+
+            // Texto "SEM PANELA FC" (se o ícone for grande o suficiente)
             if (size >= 128) {
-                ctx.fillStyle = '#1a1a1a';
-                ctx.font = `bold ${size * 0.15}px Arial`;
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#16a34a';
+                ctx.lineWidth = size * 0.002;
+                ctx.font = `bold ${size * 0.07}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('FC', centerX, centerY + radius + size * 0.15);
+
+                // Sombra do texto
+                ctx.fillStyle = '#16a34a';
+                ctx.globalAlpha = 0.5;
+                ctx.fillText('SEM PANELA FC', size / 2 + 2, size * 0.88 + 2);
+
+                // Texto principal
+                ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = 1;
+                ctx.strokeText('SEM PANELA FC', size / 2, size * 0.88);
+                ctx.fillText('SEM PANELA FC', size / 2, size * 0.88);
             }
 
             item.appendChild(canvas);
@@ -177,10 +257,10 @@
         }
 
         function downloadAll() {
-            canvases.forEach(({ canvas, size }) => {
+            canvases.forEach(({ canvas, size }, index) => {
                 setTimeout(() => {
                     downloadCanvas(canvas, `icon-${size}x${size}.png`);
-                }, size); // Pequeno delay para não sobrecarregar
+                }, index * 200); // Delay entre downloads
             });
         }
     </script>

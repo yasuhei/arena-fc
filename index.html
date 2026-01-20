@@ -9,12 +9,12 @@
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="theme-color" content="#ffd700" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Sem Panela FC" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="msapplication-TileColor" content="#1a1a1a" />
+    <meta name="msapplication-TileColor" content="#ffd700" />
     <meta name="msapplication-tap-highlight" content="no" />
     <title>Sem Panela FC - Montador de Times de Futebol Inteligente</title>
     <meta name="description"
@@ -136,18 +136,48 @@
 
         // Detectar se pode ser instalado como PWA
         let deferredPrompt;
+        let isInstalled = false;
+
+        // Verificar se já está instalado
+        window.addEventListener('DOMContentLoaded', () => {
+            // Verificar localStorage primeiro
+            if (localStorage.getItem('pwa-installed') === 'true') {
+                isInstalled = true;
+                console.log('✅ PWA marcado como instalado no localStorage');
+                return;
+            }
+
+            // Detectar se está rodando como PWA instalado
+            if (window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true ||
+                document.referrer.includes('android-app://')) {
+                isInstalled = true;
+                localStorage.setItem('pwa-installed', 'true');
+                console.log('✅ PWA já está instalado - não mostrar botão');
+            }
+        });
+
         window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('PWA pode ser instalado');
+            console.log('💡 PWA pode ser instalado');
             e.preventDefault();
             deferredPrompt = e;
 
-            // Mostrar botão de instalação personalizado
-            showInstallButton();
+            // Só mostrar se não estiver instalado
+            if (!isInstalled) {
+                showInstallButton();
+            }
         });
 
         function showInstallButton() {
+            // Não mostrar se já estiver instalado
+            if (isInstalled) {
+                console.log('⚠️ PWA já instalado - não mostrar botão');
+                return;
+            }
+
             // Criar botão de instalação
             const installButton = document.createElement('button');
+            installButton.setAttribute('data-pwa-install', 'true');
             installButton.innerHTML = '📱 INSTALAR APP';
             installButton.style.cssText = `
                 position: fixed;
@@ -192,9 +222,13 @@
                     installButton.remove();
 
                     if (outcome === 'accepted') {
-                        // Mostrar mensagem de sucesso
+                        isInstalled = true;
+                        localStorage.setItem('pwa-installed', 'true');
                         showSuccessMessage();
                     }
+                } else {
+                    // Fallback para navegadores que não suportam PWA nativo
+                    alert('📱 Para instalar este app:\n\n• Chrome/Edge: Use o menu "Instalar app"\n• Safari iOS: Toque "Compartilhar" → "Adicionar à Tela Inicial"\n• Firefox: Use "Adicionar à tela inicial"');
                 }
             });
 
@@ -202,7 +236,7 @@
 
             // Remover botão após 15 segundos se não clicado
             setTimeout(() => {
-                if (installButton.parentNode) {
+                if (installButton.parentNode && !isInstalled) {
                     installButton.style.opacity = '0';
                     installButton.style.transform = 'translateY(10px) scale(0.9)';
                     setTimeout(() => installButton.remove(), 300);
@@ -240,16 +274,56 @@
         // Detectar quando foi instalado
         window.addEventListener('appinstalled', (evt) => {
             console.log('🎉 PWA foi instalado com sucesso!');
+            isInstalled = true;
+            localStorage.setItem('pwa-installed', 'true');
             showSuccessMessage();
+
+            // Remover qualquer botão de instalação existente
+            const existingButton = document.querySelector('button[data-pwa-install]');
+            if (existingButton) {
+                existingButton.remove();
+            }
         });
 
         // Fallback: Se PWA não for detectado automaticamente, mostrar botão após 5 segundos
         setTimeout(() => {
-            if (!document.querySelector('button[data-pwa-install]') && !deferredPrompt) {
+            // Só mostrar se não estiver instalado e não houver botão já
+            if (!document.querySelector('button[data-pwa-install]') && !deferredPrompt && !isInstalled) {
                 console.log('💡 Mostrando botão de instalação como fallback...');
                 showInstallButton();
             }
         }, 5000);
+
+        // DEBUG: Adicionar botão para resetar estado PWA (apenas em desenvolvimento)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            setTimeout(() => {
+                const resetButton = document.createElement('button');
+                resetButton.innerHTML = '🔄 RESET PWA';
+                resetButton.style.cssText = `
+                    position: fixed;
+                    bottom: 80px;
+                    right: 20px;
+                    background: #dc2626;
+                    color: white;
+                    border: none;
+                    padding: 10px 15px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    z-index: 9998;
+                    opacity: 0.7;
+                `;
+
+                resetButton.addEventListener('click', () => {
+                    localStorage.removeItem('pwa-installed');
+                    isInstalled = false;
+                    console.log('🔄 Estado PWA resetado');
+                    window.location.reload();
+                });
+
+                document.body.appendChild(resetButton);
+            }, 1000);
+        }
     </script>
 </body>
 
