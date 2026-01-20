@@ -1,4 +1,30 @@
 User-agent: *
 Allow: /
 
+# Priority pages for Sem Panela FC SEO
+Allow: /sem-panela-fc.html
+Allow: /landing-sem-panela-fc.html
+Allow: /faq-sem-panela-fc.html
+
+# Sitemap
 Sitemap: https://sem-panela-fc.vercel.app/sitemap.xml
+
+# Páginas importantes
+Allow: /sobre.html
+Allow: /como-usar.html
+Allow: /dicas-futebol.html
+Allow: /beneficios-futebol.html
+Allow: /regras-futebol.html
+Allow: /equipamentos-futebol.html
+Allow: /privacy-policy.html
+
+# Disallow system files
+Disallow: /node_modules/
+Disallow: /src/
+Disallow: /dist/
+Disallow: /.git/
+Disallow: /.vscode/
+Disallow: /*.json$
+
+# Crawl-delay
+Crawl-delay: 1

@@ -1,8 +1,63 @@
 {
     "rewrites": [
         {
+            "source": "/sem-panela",
+            "destination": "/"
+        },
+        {
+            "source": "/sempanela",
+            "destination": "/"
+        },
+        {
+            "source": "/montador-times",
+            "destination": "/"
+        },
+        {
+            "source": "/sem-panela-futebol",
+            "destination": "/"
+        },
+        {
+            "source": "/organizador-peladas",
+            "destination": "/"
+        },
+        {
+            "source": "/montador-escalacao",
+            "destination": "/"
+        },
+        {
+            "source": "/times-balanceados",
+            "destination": "/"
+        }
+    ],
+    "redirects": [
+        {
+            "source": "/home",
+            "destination": "/",
+            "permanent": true
+        },
+        {
+            "source": "/index",
+            "destination": "/",
+            "permanent": true
+        }
+    ],
+    "headers": [
+        {
             "source": "/(.*)",
-            "destination": "/index.html"
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                }
+            ]
         }
     ]
 }

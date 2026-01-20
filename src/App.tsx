@@ -1087,6 +1087,14 @@ function App() {
         <footer className="text-center text-gray-400 text-xs py-4 md:py-6 border-t border-gray-800 bg-black bg-opacity-80 backdrop-blur-md relative z-10">
           <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-6 space-y-2 sm:space-y-0 mb-3 uppercase tracking-wider">
             <a 
+              href="/landing-sem-panela-fc.html" 
+              target="_blank"
+              className="hover:text-white transition-colors font-bold text-yellow-400"
+            >
+              🚀 Sem Panela FC
+            </a>
+            <span className="hidden sm:inline text-gray-700">|</span>
+            <a 
               href="/sobre.html" 
               target="_blank"
               className="hover:text-white transition-colors font-medium"
@@ -1103,6 +1111,14 @@ function App() {
             </a>
             <span className="hidden sm:inline text-gray-700">|</span>
             <a 
+              href="/faq-sem-panela-fc.html" 
+              target="_blank"
+              className="hover:text-white transition-colors font-medium"
+            >
+              FAQ
+            </a>
+            <span className="hidden sm:inline text-gray-700">|</span>
+            <a 
               href="/privacy-policy.html" 
               target="_blank"
               className="hover:text-white transition-colors font-medium"
@@ -1113,7 +1129,44 @@ function App() {
           <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-4 space-y-1 sm:space-y-0 text-gray-600">
             <span className="font-black tracking-wider">© 2026 SEM PANELA FC</span>
             <span className="hidden sm:inline">•</span>
-            <span className="uppercase tracking-wide">Performance Driven</span>
+            <span className="uppercase tracking-wide">Desenvolvido por Yasuhei Cristiano Nakamura</span>
+          </div>
+          
+          {/* Developer Credit */}
+          <div className="mt-2 text-gray-500 text-xs">
+            <span className="uppercase tracking-wide">
+              Desenvolvedor Full Stack • React + TypeScript • Algoritmos avançados de balanceamento
+            </span>
+          </div>
+          
+          {/* SEO Content - Hidden but crawlable */}
+          <div className="sr-only">
+            <h2>Sem Panela FC - Sistema para Montar Times de Futebol</h2>
+            <p>
+              O Sem Panela FC é o melhor sistema para organizar peladas e montar times de futebol balanceados. 
+              Nossa plataforma elimina as panelinhas e garante que todos tenham oportunidade igual de jogar em times equilibrados.
+              Com algoritmos inteligentes, importação de listas do WhatsApp e sistema de avaliação preciso, 
+              o Sem Panela FC revoluciona a forma como você organiza suas peladas.
+            </p>
+            <h3>Funcionalidades do Sem Panela FC</h3>
+            <ul>
+              <li>Montador de times inteligente com 3 estratégias diferentes</li>
+              <li>Sistema de avaliação de jogadores de 0.0 a 5.0</li>
+              <li>Importação automática de listas do WhatsApp</li>
+              <li>Timer integrado com apito automático</li>
+              <li>Compartilhamento direto para WhatsApp</li>
+              <li>Interface responsiva para mobile e desktop</li>
+            </ul>
+            <h3>Tecnologia e Desenvolvimento</h3>
+            <p>
+              Sistema desenvolvido por Yasuhei Cristiano Nakamura, desenvolvedor Full Stack com expertise em React, TypeScript e algoritmos complexos.
+              Arquitetura moderna, código limpo e performance otimizada garantem a melhor experiência para organizar peladas.
+              Desenvolvido com foco em UX/UI profissional e escalabilidade.
+            </p>
+            <p>
+              Organize suas peladas sem conflito, crie times balanceados e garanta diversão para todos com o Sem Panela FC.
+              O sistema mais completo para futebol amador do Brasil, criado por Yasuhei Cristiano Nakamura.
+            </p>
           </div>
         </footer>
       </div>

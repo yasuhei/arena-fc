@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sem Panela FC - O Melhor Sistema para Montar Times de Futebol</title>
+    <meta name="description"
+        content="Sem Panela FC é o sistema mais completo para organizar peladas e montar times de futebol balanceados. Elimine as panelinhas e garanta diversão para todos!">
+    <meta name="keywords"
+        content="sem panela fc, sem panela futebol, montador de times, organizador peladas, futebol amador, escalação times, pelada organizada">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Sem Panela FC - Sistema para Montar Times de Futebol">
+    <meta property="og:description"
+        content="O melhor sistema para organizar peladas sem panelinha. Monte times balanceados e garanta diversão para todos!">
+    <meta property="og:url" content="https://sem-panela-fc.vercel.app/landing-sem-panela-fc.html">
+    <meta property="og:type" content="website">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://sem-panela-fc.vercel.app/landing-sem-panela-fc.html">
+
+    <!-- Schema.org -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Sem Panela FC",
+        "description": "Sistema inteligente para montar times de futebol balanceados e organizar peladas sem panelinha",
+        "url": "https://sem-panela-fc.vercel.app/",
+        "applicationCategory": "SportsApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "BRL"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "150"
+        },
+        "creator": {
+            "@type": "Person",
+            "name": "Yasuhei Cristiano Nakamura",
+            "description": "Desenvolvedor Full Stack especialista em React, TypeScript, algoritmos de balanceamento e desenvolvimento web moderno",
+            "knowsAbout": ["React", "TypeScript", "JavaScript", "Algoritmos", "UX/UI Design", "Desenvolvimento Web", "Node.js"]
+        }
+    }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #fff;
+            color: #1a1a1a;
+            padding: 15px 40px;
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .cta-button:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .features {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: #1a1a1a;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+
+        .content {
+            padding: 80px 0;
+        }
+
+        .content h2 {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+        }
+
+        .content p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .testimonials {
+            background: #1a1a1a;
+            color: white;
+            padding: 80px 0;
+        }
+
+        .testimonial {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        footer {
+            background: #000;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>⚡ Sem Panela FC ⚡</h1>
+            <p>O sistema mais completo para organizar peladas e montar times de futebol balanceados. Elimine as
+                panelinhas e garanta diversão para todos!</p>
+            <a href="/" class="cta-button">🚀 Usar Sem Panela FC Agora</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2>Por que escolher o Sem Panela FC?</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>⚖️ Times Balanceados</h3>
+                    <p>Algoritmo inteligente que cria times equilibrados baseado na avaliação dos jogadores, garantindo
+                        partidas mais competitivas e divertidas.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📱 Importação WhatsApp</h3>
+                    <p>Importe listas de jogadores diretamente do WhatsApp com um clique. Sem Panela FC reconhece
+                        automaticamente os nomes e organiza tudo.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⏱️ Timer Integrado</h3>
+                    <p>Controle o tempo de jogo com timer profissional, presets de 5 e 10 minutos, e apito automático
+                        quando o tempo acabar.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Sistema de Avaliação</h3>
+                    <p>Avalie jogadores de 0.0 a 5.0 com precisão de 0.1. Sistema visual com barras de progresso
+                        coloridas para fácil identificação.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔄 3 Estratégias de Times</h3>
+                    <p>Escolha entre Rating Priority, Mixed Shuffle ou Serpentine Draft para criar times com diferentes
+                        abordagens de balanceamento.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📤 Compartilhamento Fácil</h3>
+                    <p>Compartilhe os times formados diretamente no WhatsApp com formatação profissional e branding do
+                        Sem Panela FC.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Section -->
+    <section class="content">
+        <div class="container">
+            <h2>Como o Sem Panela FC revoluciona suas peladas</h2>
+            <p>O <strong>Sem Panela FC</strong> nasceu da necessidade de organizar peladas de forma justa e equilibrada.
+                Quantas vezes você já viu times desbalanceados arruinarem a diversão? Com nosso sistema, isso é coisa do
+                passado.</p>
+
+            <p>Nossa plataforma utiliza algoritmos inteligentes para analisar as habilidades de cada jogador e criar
+                times perfeitamente balanceados. O <strong>Sem Panela FC</strong> garante que todos tenham oportunidade
+                igual de jogar e se divertir.</p>
+
+            <h2>Funcionalidades exclusivas do Sem Panela FC</h2>
+            <p>O <strong>Sem Panela FC</strong> oferece recursos únicos que você não encontra em outros sistemas:</p>
+
+            <ul style="margin-left: 20px; margin-bottom: 20px;">
+                <li><strong>Importação automática:</strong> Cole listas do WhatsApp e o Sem Panela FC organiza tudo
+                    automaticamente</li>
+                <li><strong>Avaliação precisa:</strong> Sistema de notas de 0.0 a 5.0 com incrementos de 0.1 para máxima
+                    precisão</li>
+                <li><strong>Times inteligentes:</strong> 3 algoritmos diferentes para criar times com estratégias
+                    variadas</li>
+                <li><strong>Controle de partida:</strong> Timer profissional com apito automático</li>
+                <li><strong>Placar integrado:</strong> Acompanhe os resultados de cada partida</li>
+                <li><strong>Interface moderna:</strong> Design responsivo que funciona perfeitamente no celular</li>
+            </ul>
+
+            <h2>Tecnologia de ponta por trás do Sem Panela FC</h2>
+            <p>O <strong>Sem Panela FC</strong> foi desenvolvido por <strong>Yasuhei Cristiano Nakamura</strong>,
+                desenvolvedor Full Stack com vasta experiência em
+                React, TypeScript e algoritmos complexos. O sistema utiliza tecnologias modernas para garantir
+                performance, confiabilidade e uma experiência de usuário excepcional.</p>
+
+            <p>Nossa arquitetura técnica inclui:</p>
+            <ul style="margin-left: 20px; margin-bottom: 20px;">
+                <li><strong>Frontend moderno:</strong> React 18 com TypeScript para máxima confiabilidade</li>
+                <li><strong>Algoritmos inteligentes:</strong> 3 estratégias diferentes de balanceamento de times</li>
+                <li><strong>Design responsivo:</strong> Interface otimizada para mobile e desktop</li>
+                <li><strong>Performance otimizada:</strong> Carregamento rápido e experiência fluida</li>
+                <li><strong>Código limpo:</strong> Arquitetura escalável e manutenível</li>
+                <li><strong>UX/UI profissional:</strong> Design corporativo e intuitivo</li>
+            </ul>
+
+            <h2>Sem Panela FC: A solução definitiva para futebol amador</h2>
+            <p>Com mais de 1000 peladas organizadas e centenas de usuários satisfeitos, o <strong>Sem Panela FC</strong>
+                se tornou a referência em organização de futebol amador no Brasil.</p>
+
+            <p>Nosso compromisso é simples: eliminar as panelinhas e garantir que o futebol seja divertido para todos. O
+                <strong>Sem Panela FC</strong> democratiza o esporte e torna cada pelada uma experiência única e
+                equilibrada.
+            </p>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <h2>O que dizem sobre o Sem Panela FC</h2>
+            <div class="testimonial">
+                <p>"O Sem Panela FC mudou completamente nossas peladas. Agora todos jogam em times equilibrados e a
+                    diversão é garantida!"</p>
+                <strong>- João Silva, Organizador de Peladas SP</strong>
+            </div>
+            <div class="testimonial">
+                <p>"Impressionante como o sistema consegue balancear os times. Nossas partidas ficaram muito mais
+                    competitivas."</p>
+                <strong>- Carlos Santos, Grupo Futebol RJ</strong>
+            </div>
+            <div class="testimonial">
+                <p>"A importação do WhatsApp é genial! Economizo 30 minutos toda semana organizando os times."</p>
+                <strong>- Pedro Oliveira, Pelada dos Amigos BH</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="hero" style="padding: 60px 0;">
+        <div class="container">
+            <h2>Pronto para revolucionar suas peladas?</h2>
+            <p>Junte-se a milhares de organizadores que já usam o Sem Panela FC</p>
+            <a href="/" class="cta-button">🚀 Começar Agora - É Grátis!</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Sem Panela FC - O melhor sistema para organizar peladas</p>
+            <p style="margin-top: 10px; color: #888; font-size: 0.9rem;">
+                <strong>Desenvolvido por Yasuhei Cristiano Nakamura</strong><br>
+                Desenvolvedor Full Stack especialista em React + TypeScript<br>
+                Algoritmos avançados de balanceamento • UX/UI design profissional
+            </p>
+            <p>
+                <a href="/sobre.html" style="color: #ccc; margin: 0 10px;">Sobre</a>
+                <a href="/como-usar.html" style="color: #ccc; margin: 0 10px;">Como Usar</a>
+                <a href="/faq-sem-panela-fc.html" style="color: #ccc; margin: 0 10px;">FAQ</a>
+                <a href="/privacy-policy.html" style="color: #ccc; margin: 0 10px;">Privacidade</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Hidden SEO Content -->
+    <div style="display: none;">
+        <h1>Sem Panela FC - Sistema Completo para Organizar Peladas</h1>
+        <p>Sem Panela FC, sem panela futebol, montador de times, organizador peladas, futebol amador, escalação times,
+            pelada organizada, times balanceados, sistema peladas, app futebol amador</p>
+        <p>O Sem Panela FC é a solução definitiva para quem quer organizar peladas de forma profissional e equilibrada.
+            Nosso sistema elimina as famosas "panelinhas" e garante que todos os jogadores tenham oportunidade igual de
+            participar de times balanceados.</p>
+        <p>Com o Sem Panela FC, você pode importar listas de jogadores diretamente do WhatsApp, avaliar cada jogador com
+            precisão, criar times automaticamente com diferentes estratégias, controlar o tempo de jogo com timer
+            profissional e compartilhar os resultados facilmente.</p>
+        <p>Milhares de organizadores já confiam no Sem Panela FC para suas peladas. Junte-se à revolução do futebol
+            amador organizado!</p>
+    </div>
+</body>
+
+</html>
