@@ -148,59 +148,108 @@
         function showInstallButton() {
             // Criar botão de instalação
             const installButton = document.createElement('button');
-            installButton.textContent = '📱 INSTALAR APP';
+            installButton.innerHTML = '📱 INSTALAR APP';
             installButton.style.cssText = `
                 position: fixed;
                 bottom: 20px;
                 right: 20px;
-                background: #1a1a1a;
+                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
                 color: white;
                 border: none;
-                padding: 12px 20px;
-                border-radius: 25px;
+                padding: 15px 25px;
+                border-radius: 30px;
                 font-weight: bold;
                 font-size: 14px;
                 cursor: pointer;
-                z-index: 1000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 9999;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.3);
                 transition: all 0.3s ease;
+                font-family: 'Inter', Arial, sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.1);
             `;
 
             installButton.addEventListener('mouseover', () => {
-                installButton.style.background = '#2d2d2d';
-                installButton.style.transform = 'translateY(-2px)';
+                installButton.style.background = 'linear-gradient(135deg, #2d2d2d 0%, #404040 100%)';
+                installButton.style.transform = 'translateY(-3px) scale(1.05)';
+                installButton.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
             });
 
             installButton.addEventListener('mouseout', () => {
-                installButton.style.background = '#1a1a1a';
-                installButton.style.transform = 'translateY(0)';
+                installButton.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
+                installButton.style.transform = 'translateY(0) scale(1)';
+                installButton.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
             });
 
             installButton.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
                     const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`Usuário ${outcome} a instalação`);
+                    console.log(`✅ Usuário ${outcome} a instalação`);
                     deferredPrompt = null;
                     installButton.remove();
+
+                    if (outcome === 'accepted') {
+                        // Mostrar mensagem de sucesso
+                        showSuccessMessage();
+                    }
                 }
             });
 
             document.body.appendChild(installButton);
 
-            // Remover botão após 10 segundos se não clicado
+            // Remover botão após 15 segundos se não clicado
             setTimeout(() => {
                 if (installButton.parentNode) {
                     installButton.style.opacity = '0';
+                    installButton.style.transform = 'translateY(10px) scale(0.9)';
                     setTimeout(() => installButton.remove(), 300);
                 }
-            }, 10000);
+            }, 15000);
+        }
+
+        function showSuccessMessage() {
+            const message = document.createElement('div');
+            message.innerHTML = '🎉 App instalado com sucesso!';
+            message.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 8px 25px rgba(34,197,94,0.3);
+                font-family: 'Inter', Arial, sans-serif;
+                animation: slideIn 0.3s ease;
+            `;
+
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.style.opacity = '0';
+                message.style.transform = 'translateX(100px)';
+                setTimeout(() => message.remove(), 300);
+            }, 3000);
         }
 
         // Detectar quando foi instalado
         window.addEventListener('appinstalled', (evt) => {
-            console.log('PWA foi instalado com sucesso!');
+            console.log('🎉 PWA foi instalado com sucesso!');
+            showSuccessMessage();
         });
+
+        // Fallback: Se PWA não for detectado automaticamente, mostrar botão após 5 segundos
+        setTimeout(() => {
+            if (!document.querySelector('button[data-pwa-install]') && !deferredPrompt) {
+                console.log('💡 Mostrando botão de instalação como fallback...');
+                showInstallButton();
+            }
+        }, 5000);
     </script>
 </body>
 
