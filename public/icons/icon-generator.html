@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Gerador de Ícones PWA - Sem Panela FC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .icon-preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Gerador de Ícones PWA - Sem Panela FC</h1>
+    <p>Esta página gera automaticamente os ícones necessários para o PWA.</p>
+
+    <div id="icons-container"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const container = document.getElementById('icons-container');
+
+        sizes.forEach(size => {
+            // Criar canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background preto
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, size, size);
+
+            // Texto "⚽"
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚽', size / 2, size / 2);
+
+            // Criar div preview
+            const preview = document.createElement('div');
+            preview.className = 'icon-preview';
+            preview.innerHTML = `<div>${size}x${size}</div>`;
+            preview.appendChild(canvas);
+
+            // Criar link de download
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = canvas.toDataURL();
+            link.textContent = 'Download';
+            link.style.display = 'block';
+            preview.appendChild(link);
+
+            container.appendChild(preview);
+        });
+    </script>
+</body>
+
+</html>

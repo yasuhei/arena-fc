@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1a1a1a"/>
+  
+  <!-- Circle background -->
+  <circle cx="256" cy="256" r="200" fill="#ffffff"/>
+  
+  <!-- Soccer ball pattern -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#1a1a1a" stroke-width="8"/>
+  
+  <!-- Pentagon in center -->
+  <polygon points="256,176 286,206 276,246 236,246 226,206" fill="#1a1a1a"/>
+  
+  <!-- Hexagons around -->
+  <polygon points="256,176 226,206 196,186 196,146 226,126 256,146" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <polygon points="256,176 286,206 316,186 316,146 286,126 256,146" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <polygon points="226,206 236,246 206,276 166,266 156,226 186,196" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <polygon points="286,206 276,246 306,276 346,266 356,226 326,196" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <polygon points="236,246 276,246 306,276 276,306 236,306 206,276" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  
+  <!-- Text -->
+  <text x="256" y="400" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#ffffff">SEM PANELA FC</text>
+</svg>

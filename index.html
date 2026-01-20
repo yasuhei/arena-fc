@@ -3,8 +3,19 @@
 
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Sem Panela FC" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#1a1a1a" />
+    <meta name="msapplication-tap-highlight" content="no" />
     <title>Sem Panela FC - Montador de Times de Futebol Inteligente</title>
     <meta name="description"
         content="Sem Panela FC - O melhor sistema para montar times de futebol balanceados. Crie escalações equilibradas, importe listas do WhatsApp e organize suas peladas sem panelinha!" />
@@ -95,6 +106,102 @@
     </div>
 
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registrado com sucesso: ', registration);
+
+                        // Verificar se há atualizações
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Nova versão disponível
+                                    if (confirm('Nova versão disponível! Deseja atualizar?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar SW: ', error);
+                    });
+            });
+        }
+
+        // Detectar se pode ser instalado como PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA pode ser instalado');
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Mostrar botão de instalação personalizado
+            showInstallButton();
+        });
+
+        function showInstallButton() {
+            // Criar botão de instalação
+            const installButton = document.createElement('button');
+            installButton.textContent = '📱 INSTALAR APP';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #1a1a1a;
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 25px;
+                font-weight: bold;
+                font-size: 14px;
+                cursor: pointer;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transition: all 0.3s ease;
+            `;
+
+            installButton.addEventListener('mouseover', () => {
+                installButton.style.background = '#2d2d2d';
+                installButton.style.transform = 'translateY(-2px)';
+            });
+
+            installButton.addEventListener('mouseout', () => {
+                installButton.style.background = '#1a1a1a';
+                installButton.style.transform = 'translateY(0)';
+            });
+
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`Usuário ${outcome} a instalação`);
+                    deferredPrompt = null;
+                    installButton.remove();
+                }
+            });
+
+            document.body.appendChild(installButton);
+
+            // Remover botão após 10 segundos se não clicado
+            setTimeout(() => {
+                if (installButton.parentNode) {
+                    installButton.style.opacity = '0';
+                    setTimeout(() => installButton.remove(), 300);
+                }
+            }, 10000);
+        }
+
+        // Detectar quando foi instalado
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('PWA foi instalado com sucesso!');
+        });
+    </script>
 </body>
 
 </html>
