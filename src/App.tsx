@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePlayers, Player } from './hooks/usePlayers';
 import { PlayerManager } from './components/PlayerManager';
-import AdBanner from './components/AdBanner';
-import AdSenseScript from './components/AdSenseScript';
-import { ADSENSE_CONFIG } from './config/adsense';
 
 // Função para renderizar rating com barra de progresso compacta
 const renderRatingBarCompact = (rating: number) => {
@@ -47,25 +44,21 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
   const total = available.length;
   if (total < 6) return [];
 
-  let teamSize = 6;
   let numTeams = 2;
 
-  // Lógica baseada no total de jogadores
-  if (total === 12) {
+  // Lógica otimizada para futebol society (6 jogadores por time)
+  if (total >= 6 && total <= 12) {
+    // 6-12 jogadores: 2 times
     numTeams = 2;
-    teamSize = 6;
-  } else if (total >= 13 && total <= 14) {
+  } else if (total >= 13 && total <= 21) {
+    // 13-21 jogadores: 3 times (ideal para society)
     numTeams = 3;
-    teamSize = 6;
-  } else if (total === 15) {
-    numTeams = 3;
-    teamSize = 5;
-  } else if (total > 15) {
-    numTeams = 3;
-    teamSize = Math.ceil(total / 3);
-  } else if (total >= 6 && total <= 11) {
-    numTeams = 2;
-    teamSize = Math.ceil(total / 2);
+  } else if (total >= 22 && total <= 32) {
+    // 22-32 jogadores: 4 times
+    numTeams = 4;
+  } else if (total > 32) {
+    // Mais de 32: calcular número ideal de times
+    numTeams = Math.ceil(total / 6); // Manter próximo de 6 por time
   }
 
   const teams: Player[][] = Array.from({ length: numTeams }, () => []);
@@ -107,9 +100,7 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
     let direction = 1; // 1 para frente, -1 para trás
     
     for (const player of sortedPlayers) {
-      if (serpentineTeams[currentTeam].length < teamSize) {
-        serpentineTeams[currentTeam].push(player);
-      }
+      serpentineTeams[currentTeam].push(player);
       
       // Mover para próximo time
       currentTeam += direction;
@@ -128,37 +119,12 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
   }
 
   // Distribuir jogadores de forma balanceada (para variações 0 e 1)
-  // Algoritmo: sempre adicionar ao time com menor soma de notas
+  // Algoritmo melhorado: distribuir um por vez para cada time
+  let currentTeamIndex = 0;
+  
   for (const player of sortedPlayers) {
-    // Calcular soma das notas de cada time
-    const teamSums = teams.map(team => 
-      team.reduce((sum, p) => sum + p.rating, 0)
-    );
-    
-    // Encontrar o time com menor soma que ainda tem espaço
-    let targetTeamIndex = -1;
-    let minSum = Infinity;
-    
-    for (let i = 0; i < numTeams; i++) {
-      if (teams[i].length < teamSize && teamSums[i] < minSum) {
-        minSum = teamSums[i];
-        targetTeamIndex = i;
-      }
-    }
-    
-    // Se todos os times estão cheios, adicionar ao primeiro disponível
-    if (targetTeamIndex === -1) {
-      for (let i = 0; i < numTeams; i++) {
-        if (teams[i].length < teamSize) {
-          targetTeamIndex = i;
-          break;
-        }
-      }
-    }
-    
-    if (targetTeamIndex !== -1) {
-      teams[targetTeamIndex].push(player);
-    }
+    teams[currentTeamIndex].push(player);
+    currentTeamIndex = (currentTeamIndex + 1) % numTeams;
   }
 
   return teams.filter(team => team.length > 0);
@@ -429,8 +395,6 @@ function App() {
         }}
       ></div>
       
-      <AdSenseScript />
-      
       <header className="relative z-10 bg-black bg-opacity-80 backdrop-blur-md border-b border-gray-800">
         <div className="container mx-auto px-4 md:px-8 py-4 md:py-6">
           <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white flex items-center justify-center space-x-3"
@@ -446,16 +410,6 @@ function App() {
           </p>
         </div>
       </header>
-
-      {/* Banner superior */}
-      <div className="container mx-auto px-2 md:px-4 pt-1 md:pt-3">
-        <AdBanner 
-          adSlot={ADSENSE_CONFIG.AD_SLOTS.HEADER_BANNER}
-          adFormat="horizontal"
-          className="mb-1 md:mb-3"
-          style={{ minHeight: '90px' }}
-        />
-      </div>
       
       <div className="container mx-auto p-3 md:p-6 max-w-7xl relative z-10">
         {/* Botão para alternar entre gerenciar e selecionar jogadores */}
@@ -467,24 +421,6 @@ function App() {
           >
             {showManager ? '← BACK TO SELECTION' : '⚙ MANAGE PLAYERS'}
           </button>
-        </div>
-
-        {/* Banner lateral esquerdo */}
-        <div className="hidden lg:block fixed left-4 top-1/2 transform -translate-y-1/2 z-10">
-          <AdBanner 
-            adSlot={ADSENSE_CONFIG.AD_SLOTS.LEFT_SIDEBAR}
-            adFormat="vertical"
-            style={{ width: '160px', minHeight: '600px' }}
-          />
-        </div>
-
-        {/* Banner lateral direito */}
-        <div className="hidden lg:block fixed right-4 top-1/2 transform -translate-y-1/2 z-10">
-          <AdBanner 
-            adSlot={ADSENSE_CONFIG.AD_SLOTS.RIGHT_SIDEBAR}
-            adFormat="vertical"
-            style={{ width: '160px', minHeight: '600px' }}
-          />
         </div>
 
         {showManager && (
@@ -602,16 +538,6 @@ function App() {
                 ⚡ CREATE TEAMS ⚡
               </button>
               {selected.size < 6 && <p className="text-gray-400 mt-3 font-medium text-xs md:text-sm uppercase tracking-wide">Select at least 6 players to create teams</p>}
-            </div>
-
-            {/* Banner no meio do conteúdo */}
-            <div className="mb-2 md:mb-4">
-              <AdBanner 
-                adSlot={ADSENSE_CONFIG.AD_SLOTS.CONTENT_RECTANGLE}
-                adFormat="rectangle"
-                className="mx-auto"
-                style={{ maxWidth: '336px', minHeight: '280px' }}
-              />
             </div>
           </>
         )}
@@ -1072,16 +998,6 @@ function App() {
             </div>
           </div>
         )}
-
-        {/* Banner inferior */}
-        <div className="mt-3 md:mt-6 mb-2 md:mb-3">
-          <AdBanner 
-            adSlot={ADSENSE_CONFIG.AD_SLOTS.FOOTER_BANNER}
-            adFormat="horizontal"
-            className="mx-auto"
-            style={{ minHeight: '90px' }}
-          />
-        </div>
 
         {/* Rodapé com links importantes */}
         <footer className="text-center text-gray-400 text-xs py-4 md:py-6 border-t border-gray-800 bg-black bg-opacity-80 backdrop-blur-md relative z-10">

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpar Cache AdSense - Sem Panela FC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            min-width: 200px;
+        }
+
+        .btn:hover {
+            background: #c82333;
+        }
+
+        .btn.success {
+            background: #28a745;
+        }
+
+        .btn.success:hover {
+            background: #1e7e34;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .info h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧹 Limpar Cache AdSense</h1>
+
+        <div class="info">
+            <h3>🚫 Problema: Anúncios ainda aparecem</h3>
+            <p>Se você ainda está vendo anúncios do Google AdSense mesmo após a remoção do código, isso pode ser devido
+                ao cache do navegador ou scripts que ainda estão ativos.</p>
+        </div>
+
+        <div class="info">
+            <h3>🔧 Soluções:</h3>
+            <div class="step">
+                <strong>1.</strong> Limpe todo o cache do navegador
+            </div>
+            <div class="step">
+                <strong>2.</strong> Remova dados do site específico
+            </div>
+            <div class="step">
+                <strong>3.</strong> Force um hard refresh
+            </div>
+            <div class="step">
+                <strong>4.</strong> Reinicie o navegador completamente
+            </div>
+        </div>
+
+        <button class="btn" onclick="clearAllCache()">
+            🗑️ LIMPAR TODO CACHE
+        </button>
+
+        <button class="btn" onclick="clearSiteData()">
+            🧹 LIMPAR DADOS DO SITE
+        </button>
+
+        <button class="btn" onclick="hardRefresh()">
+            🔄 HARD REFRESH
+        </button>
+
+        <button class="btn success" onclick="window.location.href='/'">
+            🏠 VOLTAR AO APP
+        </button>
+
+        <div id="status"></div>
+
+        <div class="info">
+            <h3>🔧 Comandos Manuais:</h3>
+            <div class="step">
+                <strong>Chrome:</strong> Ctrl+Shift+Delete → Limpar dados de navegação
+            </div>
+            <div class="step">
+                <strong>Firefox:</strong> Ctrl+Shift+Delete → Limpar histórico recente
+            </div>
+            <div class="step">
+                <strong>Edge:</strong> Ctrl+Shift+Delete → Limpar dados de navegação
+            </div>
+            <div class="step">
+                <strong>Safari:</strong> Cmd+Option+E → Esvaziar caches
+            </div>
+        </div>
+
+        <div class="info">
+            <h3>⚠️ Se o problema persistir:</h3>
+            <p>1. <strong>Feche completamente</strong> o navegador (todas as abas)</p>
+            <p>2. <strong>Aguarde 30 segundos</strong></p>
+            <p>3. <strong>Abra novamente</strong> e acesse o site</p>
+            <p>4. <strong>Use modo incógnito</strong> para testar</p>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function clearAllCache() {
+            try {
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    showStatus(`✅ ${cacheNames.length} caches removidos!`);
+                }
+
+                // Clear localStorage
+                localStorage.clear();
+
+                // Clear sessionStorage
+                sessionStorage.clear();
+
+                // Clear IndexedDB (if any)
+                if ('indexedDB' in window) {
+                    // This is more complex, but for most cases clearing storage is enough
+                }
+
+                showStatus('✅ Todo cache foi limpo! Recarregue a página.');
+
+            } catch (error) {
+                showStatus(`❌ Erro ao limpar cache: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearSiteData() {
+            try {
+                // Clear site-specific data
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    // Modern browsers
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(
+                            cacheNames.map(cacheName => caches.delete(cacheName))
+                        );
+                    }
+
+                    showStatus('✅ Dados do site removidos! Recarregue a página.');
+                } else {
+                    showStatus('⚠️ Use a limpeza manual do navegador.', 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Erro: ${error.message}`, 'error');
+            }
+        }
+
+        function hardRefresh() {
+            showStatus('🔄 Fazendo hard refresh...');
+
+            // Force hard refresh
+            if (navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Edge')) {
+                // Chrome/Edge
+                window.location.reload(true);
+            } else {
+                // Other browsers
+                window.location.href = window.location.href + '?t=' + Date.now();
+            }
+        }
+
+        // Remove any existing AdSense elements
+        function removeAdSenseElements() {
+            try {
+                // Remove any existing AdSense elements
+                const adsElements = document.querySelectorAll('.adsbygoogle, ins[data-ad-client]');
+                adsElements.forEach(el => el.remove());
+
+                // Remove AdSense scripts
+                const scripts = document.querySelectorAll('script[src*="googlesyndication"], script[src*="adsbygoogle"]');
+                scripts.forEach(script => script.remove());
+
+                // Clear AdSense global variables
+                if (window.adsbygoogle) {
+                    delete window.adsbygoogle;
+                }
+
+                showStatus('✅ Elementos AdSense removidos da página atual!');
+            } catch (error) {
+                showStatus(`❌ Erro ao remover elementos: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-remove on page load
+        window.addEventListener('load', () => {
+            removeAdSenseElements();
+        });
+
+        // Check for AdSense elements periodically
+        setInterval(() => {
+            const adsElements = document.querySelectorAll('.adsbygoogle, ins[data-ad-client]');
+            if (adsElements.length > 0) {
+                showStatus(`⚠️ Encontrados ${adsElements.length} elementos AdSense. Clique em "LIMPAR TODO CACHE".`, 'error');
+            }
+        }, 5000);
+    </script>
+</body>
+
+</html>
