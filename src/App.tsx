@@ -48,59 +48,83 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
 
   // Lógica otimizada para futebol society (6 jogadores por time)
   if (total >= 6 && total <= 12) {
-    // 6-12 jogadores: 2 times
     numTeams = 2;
   } else if (total >= 13 && total <= 21) {
-    // 13-21 jogadores: 3 times (ideal para society)
     numTeams = 3;
   } else if (total >= 22 && total <= 32) {
-    // 22-32 jogadores: 4 times
     numTeams = 4;
   } else if (total > 32) {
-    // Mais de 32: calcular número ideal de times
-    numTeams = Math.ceil(total / 6); // Manter próximo de 6 por time
+    numTeams = Math.ceil(total / 6);
   }
 
   const teams: Player[][] = Array.from({ length: numTeams }, () => []);
 
-  // Criar diferentes variações de balanceamento
+  // Função para embaralhar array
+  const shuffleArray = (array: Player[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   let sortedPlayers: Player[];
   
   if (variation === 0) {
-    // Variação 1: Ordenação por rating (do maior para o menor)
+    // OPTION 1: Rating Priority - Ordenação por rating + balanceamento inteligente
     sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
+    
+    // Distribuir usando algoritmo de menor soma
+    for (const player of sortedPlayers) {
+      // Encontrar o time com menor soma de ratings
+      const teamSums = teams.map(team => 
+        team.reduce((sum, p) => sum + p.rating, 0)
+      );
+      
+      let minSumIndex = 0;
+      let minSum = teamSums[0];
+      
+      for (let i = 1; i < teamSums.length; i++) {
+        if (teamSums[i] < minSum) {
+          minSum = teamSums[i];
+          minSumIndex = i;
+        }
+      }
+      
+      teams[minSumIndex].push(player);
+    }
+    
   } else if (variation === 1) {
-    // Variação 2: Embaralhar jogadores de alto nível primeiro
+    // OPTION 2: Mixed Shuffle - Embaralhar por níveis
     const highRated = available.filter(p => p.rating >= 3.5);
     const midRated = available.filter(p => p.rating >= 2.0 && p.rating < 3.5);
     const lowRated = available.filter(p => p.rating < 2.0);
     
-    // Embaralhar cada grupo
-    const shuffleArray = (array: Player[]) => {
-      const shuffled = [...array];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
+    // Embaralhar cada grupo separadamente
+    const shuffledHigh = shuffleArray(highRated);
+    const shuffledMid = shuffleArray(midRated);
+    const shuffledLow = shuffleArray(lowRated);
     
-    sortedPlayers = [
-      ...shuffleArray(highRated).sort((a, b) => b.rating - a.rating),
-      ...shuffleArray(midRated).sort((a, b) => b.rating - a.rating),
-      ...shuffleArray(lowRated).sort((a, b) => b.rating - a.rating)
-    ];
+    // Combinar os grupos embaralhados
+    sortedPlayers = [...shuffledHigh, ...shuffledMid, ...shuffledLow];
+    
+    // Distribuir round-robin
+    let currentTeamIndex = 0;
+    for (const player of sortedPlayers) {
+      teams[currentTeamIndex].push(player);
+      currentTeamIndex = (currentTeamIndex + 1) % numTeams;
+    }
+    
   } else {
-    // Variação 3: Distribuição alternada (serpentina)
+    // OPTION 3: Serpentine Draft - Padrão serpentina
     sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
     
-    // Distribuir em padrão serpentina (1,2,3,3,2,1,1,2,3...)
-    const serpentineTeams: Player[][] = Array.from({ length: numTeams }, () => []);
     let currentTeam = 0;
     let direction = 1; // 1 para frente, -1 para trás
     
     for (const player of sortedPlayers) {
-      serpentineTeams[currentTeam].push(player);
+      teams[currentTeam].push(player);
       
       // Mover para próximo time
       currentTeam += direction;
@@ -114,17 +138,6 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
         direction = 1;
       }
     }
-    
-    return serpentineTeams.filter(team => team.length > 0);
-  }
-
-  // Distribuir jogadores de forma balanceada (para variações 0 e 1)
-  // Algoritmo melhorado: distribuir um por vez para cada time
-  let currentTeamIndex = 0;
-  
-  for (const player of sortedPlayers) {
-    teams[currentTeamIndex].push(player);
-    currentTeamIndex = (currentTeamIndex + 1) % numTeams;
   }
 
   return teams.filter(team => team.length > 0);
@@ -283,6 +296,61 @@ function App() {
     setTimerPreset(null);
   };
 
+  useEffect(() => {
+    // Comprehensive AdSense cleanup on app load
+    const cleanupAdSense = () => {
+      try {
+        // Remove any existing AdSense elements
+        const adsElements = document.querySelectorAll('.adsbygoogle, ins[data-ad-client], ins[class*="adsbygoogle"]');
+        adsElements.forEach(el => el.remove());
+
+        // Remove AdSense scripts
+        const scripts = document.querySelectorAll('script[src*="googlesyndication"], script[src*="adsbygoogle"], script[src*="googleads"]');
+        scripts.forEach(script => script.remove());
+
+        // Remove AdSense iframes
+        const iframes = document.querySelectorAll('iframe[src*="googleads"], iframe[src*="googlesyndication"]');
+        iframes.forEach(iframe => iframe.remove());
+
+        // Clear AdSense global variables
+        if (window.adsbygoogle) {
+          delete window.adsbygoogle;
+        }
+
+        // Clear any AdSense related localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('google') && (key.includes('ads') || key.includes('adsense'))) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Clear any AdSense related sessionStorage
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.includes('google') && (key.includes('ads') || key.includes('adsense'))) {
+            sessionStorage.removeItem(key);
+          }
+        });
+
+        console.log('✅ AdSense cleanup completed');
+      } catch (error) {
+        console.log('⚠️ AdSense cleanup error:', error);
+      }
+    };
+
+    // Run cleanup immediately
+    cleanupAdSense();
+
+    // Run cleanup again after a short delay to catch any delayed elements
+    setTimeout(cleanupAdSense, 2000);
+
+    // Set up a periodic cleanup to remove any new AdSense elements
+    const cleanupInterval = setInterval(cleanupAdSense, 5000);
+
+    return () => {
+      clearInterval(cleanupInterval);
+    };
+  }, []);
+
   // Efeito para verificar se atingiu o preset
   useEffect(() => {
     if (timerPreset && timerSeconds >= timerPreset && timerRunning) {
@@ -397,14 +465,36 @@ function App() {
       
       <header className="relative z-10 bg-black bg-opacity-80 backdrop-blur-md border-b border-gray-800">
         <div className="container mx-auto px-4 md:px-8 py-4 md:py-6">
-          <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white flex items-center justify-center space-x-3"
-              style={{ letterSpacing: '-0.02em' }}>
-            <span className="text-3xl md:text-5xl">⚡</span>
-            <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-              SEM PANELA FC
-            </span>
-            <span className="text-3xl md:text-5xl">⚡</span>
-          </h1>
+          <div className="flex justify-between items-center">
+            <div className="flex-1"></div>
+            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white flex items-center justify-center space-x-3"
+                style={{ letterSpacing: '-0.02em' }}>
+              <span className="text-3xl md:text-5xl">⚡</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+                SEM PANELA FC
+              </span>
+              <span className="text-3xl md:text-5xl">⚡</span>
+            </h1>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={() => {
+                  // Manual AdSense cleanup
+                  const adsElements = document.querySelectorAll('.adsbygoogle, ins[data-ad-client], ins[class*="adsbygoogle"]');
+                  adsElements.forEach(el => el.remove());
+                  const scripts = document.querySelectorAll('script[src*="googlesyndication"], script[src*="adsbygoogle"]');
+                  scripts.forEach(script => script.remove());
+                  const iframes = document.querySelectorAll('iframe[src*="googleads"], iframe[src*="googlesyndication"]');
+                  iframes.forEach(iframe => iframe.remove());
+                  if (window.adsbygoogle) delete window.adsbygoogle;
+                  alert('🚫 Anúncios removidos! Se ainda aparecerem, limpe o cache do navegador (Ctrl+Shift+Delete)');
+                }}
+                className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-none text-xs font-bold uppercase tracking-wider transition-all"
+                title="Remover anúncios persistentes"
+              >
+                🚫 NO ADS
+              </button>
+            </div>
+          </div>
           <p className="text-center text-gray-400 text-xs md:text-sm mt-2 tracking-wide uppercase">
             Performance • Balance • Victory
           </p>
@@ -543,12 +633,12 @@ function App() {
         )}
 
         {!showManager && view === 'teams' && (
-          <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-8">
+          <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-3 md:p-8 landscape:p-3 min-h-0">
             {/* Botão de navegação */}
-            <div className="mb-6">
+            <div className="mb-3 md:mb-4 landscape:mb-2">
               <button 
                 onClick={backToSelection} 
-                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 md:px-6 md:py-3 landscape:px-4 landscape:py-2 rounded-none font-black text-sm md:text-base landscape:text-sm uppercase tracking-wider transition-all"
               >
                 ← BACK TO SELECTION
               </button>
@@ -681,40 +771,40 @@ function App() {
             ) : (
               // VIEW DE TIMES AUTOMÁTICOS (código existente)
               <>
-                <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
+                <h2 className="text-xl md:text-3xl landscape:text-lg font-black mb-4 md:mb-8 landscape:mb-3 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
                   ⚡ BALANCED TEAMS ⚡
                 </h2>
             {selectedExample === null ? (
-              <div className="grid gap-6">
+              <div className="grid gap-4 md:gap-6">
                 {teams.map((example, idx) => (
-                  <div key={idx} className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 hover:border-white rounded-none p-6 cursor-pointer hover:bg-gray-800 transition-all group" onClick={() => setSelectedExample(idx)}>
-                    <h3 className="text-lg md:text-xl font-black mb-4 text-center text-white uppercase tracking-wide">
+                  <div key={idx} className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 hover:border-white rounded-none p-3 md:p-6 landscape:p-3 cursor-pointer hover:bg-gray-800 transition-all group" onClick={() => setSelectedExample(idx)}>
+                    <h3 className="text-base md:text-xl landscape:text-sm font-black mb-3 md:mb-4 landscape:mb-2 text-center text-white uppercase tracking-wide">
                       {idx === 0 && 'OPTION 1 • RATING PRIORITY'}
                       {idx === 1 && 'OPTION 2 • MIXED SHUFFLE'}
                       {idx === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
                     </h3>
-                    <div className="flex space-x-2 overflow-x-auto pb-2 justify-center">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 landscape:grid-cols-3 gap-2 md:gap-4 landscape:gap-2 justify-items-center">
                       {example.map((team, tIdx) => {
                         const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
                         const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
                         
                         return (
-                          <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-3 shadow-xl flex-shrink-0 w-28 md:w-36">
-                            <h4 className="font-black text-xs mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
+                          <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 md:p-3 landscape:p-1 shadow-xl w-full max-w-28 md:max-w-36 landscape:max-w-24">
+                            <h4 className="font-black text-xs mb-1 md:mb-2 landscape:mb-1 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
                               TEAM {tIdx + 1}
                             </h4>
-                            <div className="text-center bg-gray-900 p-2 mt-2">
-                              <div className="text-xs text-gray-400 space-y-1">
-                                <div className="uppercase tracking-wide">{team.length} Players</div>
-                                <div className="text-white font-bold text-sm">Total: {teamRatingSum.toFixed(2)}</div>
-                                <div className="text-white font-bold text-sm">Avg: {teamAverage}</div>
+                            <div className="text-center bg-gray-900 p-1 md:p-2 landscape:p-1 mt-1 md:mt-2 landscape:mt-1">
+                              <div className="text-xs text-gray-400 space-y-0.5 landscape:space-y-0">
+                                <div className="uppercase tracking-wide text-xs landscape:text-xs">{team.length} Players</div>
+                                <div className="text-white font-bold text-xs landscape:text-xs">Total: {teamRatingSum.toFixed(2)}</div>
+                                <div className="text-white font-bold text-xs landscape:text-xs">Avg: {teamAverage}</div>
                               </div>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <p className="text-center text-sm text-gray-400 mt-4 uppercase tracking-wide group-hover:text-white transition-colors">Click to view details and scores</p>
+                    <p className="text-center text-xs md:text-sm landscape:text-xs text-gray-400 mt-3 md:mt-4 landscape:mt-2 uppercase tracking-wide group-hover:text-white transition-colors">Click to view details and scores</p>
                   </div>
                 ))}
               </div>
@@ -735,14 +825,14 @@ function App() {
                         {selectedExample === 1 && 'OPTION 2 • MIXED SHUFFLE'}
                         {selectedExample === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
                       </h3>
-                      <div className="flex space-x-1 overflow-x-auto pb-2 justify-center mb-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
                         {example.map((team, tIdx) => {
                           const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
                           const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
                           
                           return (
-                            <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 shadow-2xl hover:border-white transition-all flex-shrink-0 w-32 md:w-48">
-                              <h4 className="font-black text-xs mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
+                            <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 md:p-3 shadow-2xl hover:border-white transition-all w-full">
+                              <h4 className="font-black text-xs md:text-sm mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
                                 TEAM {tIdx + 1}
                               </h4>
                               <ul className="space-y-1">
@@ -760,7 +850,7 @@ function App() {
                                           <button
                                             key={targetIdx}
                                             onClick={() => movePlayerInAutoTeams(player, tIdx, targetIdx, selectedExample)}
-                                            className="bg-gray-700 hover:bg-gray-600 text-white w-6 h-6 rounded-none text-xs font-black transition-all flex items-center justify-center"
+                                            className="bg-gray-700 hover:bg-gray-600 text-white w-5 h-5 md:w-6 md:h-6 rounded-none text-xs font-black transition-all flex items-center justify-center"
                                             title={`Move to Team ${targetIdx + 1}`}
                                           >
                                             {targetIdx + 1}
@@ -771,7 +861,7 @@ function App() {
                                   </li>
                                 ))}
                               </ul>
-                              <div className="mt-2 text-center bg-gray-900 p-2">
+                              <div className="mt-2 text-center bg-gray-900 p-1 md:p-2">
                                 <div className="text-xs text-gray-400 space-y-1">
                                   <div className="uppercase tracking-wide">Total: <span className="font-black text-white">{teamRatingSum.toFixed(2)}</span></div>
                                   <div className="uppercase tracking-wide">Avg: <span className="font-black text-white">{teamAverage}</span></div>

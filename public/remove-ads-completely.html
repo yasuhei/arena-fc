@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remover Anúncios Completamente - Sem Panela FC</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffd700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #ffd700;
+            border-radius: 5px;
+        }
+
+        .step h3 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+            color: #22c55e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .warning {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚫 Remover Anúncios Completamente</h1>
+
+        <div class="warning">
+            <strong>⚠️ Problema:</strong> Ainda vendo anúncios do Google AdSense mesmo após remoção do código?
+            Isso pode ser devido ao cache do navegador ou elementos persistentes.
+        </div>
+
+        <div class="step">
+            <h3>🧹 Passo 1: Limpar Cache do Navegador</h3>
+            <p>Pressione as teclas:</p>
+            <ul>
+                <li><strong>Chrome/Edge:</strong> <code>Ctrl + Shift + Delete</code></li>
+                <li><strong>Firefox:</strong> <code>Ctrl + Shift + Delete</code></li>
+                <li><strong>Safari:</strong> <code>Cmd + Option + E</code></li>
+            </ul>
+            <p>Selecione "Todos os dados" e marque todas as opções, especialmente:</p>
+            <ul>
+                <li>✅ Cache de imagens e arquivos</li>
+                <li>✅ Cookies e dados de sites</li>
+                <li>✅ Dados de aplicativos hospedados</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🔧 Passo 2: Remover Elementos AdSense Automaticamente</h3>
+            <p>Clique no botão abaixo para executar um script que remove todos os elementos AdSense da página atual:</p>
+            <button onclick="removeAllAdsenseElements()">🗑️ REMOVER ANÚNCIOS AGORA</button>
+            <div id="removal-status"></div>
+        </div>
+
+        <div class="step">
+            <h3>🔄 Passo 3: Forçar Atualização</h3>
+            <p>Após limpar o cache, force uma atualização completa:</p>
+            <ul>
+                <li><strong>Windows:</strong> <code>Ctrl + F5</code> ou <code>Ctrl + Shift + R</code></li>
+                <li><strong>Mac:</strong> <code>Cmd + Shift + R</code></li>
+            </ul>
+            <button onclick="forceReload()">🔄 ATUALIZAR PÁGINA AGORA</button>
+        </div>
+
+        <div class="step">
+            <h3>🌐 Passo 4: Verificar Outros Dispositivos</h3>
+            <p>Se ainda houver anúncios:</p>
+            <ul>
+                <li>Teste em uma aba anônima/privada</li>
+                <li>Teste em outro navegador</li>
+                <li>Teste em outro dispositivo</li>
+                <li>Aguarde até 24 horas para propagação completa</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>📱 Passo 5: Limpar Cache Mobile</h3>
+            <p><strong>Android Chrome:</strong></p>
+            <ul>
+                <li>Menu (3 pontos) → Configurações → Privacidade e segurança → Limpar dados de navegação</li>
+            </ul>
+            <p><strong>iOS Safari:</strong></p>
+            <ul>
+                <li>Configurações → Safari → Limpar Histórico e Dados de Sites</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🏠 Voltar ao App</h3>
+            <button onclick="goToApp()">⚽ VOLTAR AO SEM PANELA FC</button>
+        </div>
+    </div>
+
+    <script>
+        function removeAllAdsenseElements() {
+            const statusDiv = document.getElementById('removal-status');
+            let removedCount = 0;
+
+            try {
+                // Remove AdSense elements
+                const adsElements = document.querySelectorAll('.adsbygoogle, ins[data-ad-client], ins[class*="adsbygoogle"]');
+                adsElements.forEach(el => {
+                    el.remove();
+                    removedCount++;
+                });
+
+                // Remove AdSense scripts
+                const scripts = document.querySelectorAll('script[src*="googlesyndication"], script[src*="adsbygoogle"], script[src*="googleads"]');
+                scripts.forEach(script => {
+                    script.remove();
+                    removedCount++;
+                });
+
+                // Remove AdSense iframes
+                const iframes = document.querySelectorAll('iframe[src*="googleads"], iframe[src*="googlesyndication"]');
+                iframes.forEach(iframe => {
+                    iframe.remove();
+                    removedCount++;
+                });
+
+                // Clear AdSense global variables
+                if (window.adsbygoogle) {
+                    delete window.adsbygoogle;
+                    removedCount++;
+                }
+
+                // Clear any AdSense related localStorage
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('google') || key.includes('ads') || key.includes('adsense')) {
+                        localStorage.removeItem(key);
+                        removedCount++;
+                    }
+                });
+
+                // Clear any AdSense related sessionStorage
+                Object.keys(sessionStorage).forEach(key => {
+                    if (key.includes('google') || key.includes('ads') || key.includes('adsense')) {
+                        sessionStorage.removeItem(key);
+                        removedCount++;
+                    }
+                });
+
+                statusDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Sucesso! Removidos ${removedCount} elementos/scripts relacionados ao AdSense.
+                        <br><br>
+                        <strong>Próximo passo:</strong> Limpe o cache do navegador e atualize a página.
+                    </div>
+                `;
+
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="warning">
+                        ⚠️ Erro ao remover elementos: ${error.message}
+                        <br><br>
+                        Tente limpar o cache manualmente.
+                    </div>
+                `;
+            }
+        }
+
+        function forceReload() {
+            // Clear all possible caches
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+
+            // Force reload with cache bypass
+            window.location.reload(true);
+        }
+
+        function goToApp() {
+            window.location.href = '/';
+        }
+
+        // Auto-run removal when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                removeAllAdsenseElements();
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

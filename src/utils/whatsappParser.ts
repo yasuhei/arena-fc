@@ -2,6 +2,7 @@
 
 export interface ExtractedPlayer {
     name: string;
+    rating?: number; // Rating opcional extraído da lista
     originalLine: string;
     position: number;
 }
@@ -110,30 +111,107 @@ export const parseWhatsAppSections = (text: string) => {
     };
 
     let currentSection = 'confirmed';
+    let isInOutSection = false;
 
-    for (const line of lines) {
-        const lowerLine = line.toLowerCase().trim();
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const lowerLine = line.toLowerCase();
 
-        // Detectar seções
-        if (lowerLine.includes('fora') || lowerLine.includes('não vai') || lowerLine.includes('ausente')) {
+        // Detectar início da seção FORA
+        if (lowerLine.includes('fora') && !lowerLine.match(/^\d+\s*[-–]\s*/)) {
             currentSection = 'out';
+            isInOutSection = true;
             continue;
         }
 
-        if (lowerLine.includes('talvez') || lowerLine.includes('maybe') || lowerLine.includes('dúvida')) {
-            currentSection = 'maybe';
+        // Detectar outras seções que indicam fim da seção FORA
+        if (lowerLine.includes('mensalistas') ||
+            lowerLine.includes('prioridade') ||
+            lowerLine.includes('observação') ||
+            lowerLine.includes('obs:')) {
+            isInOutSection = false;
+            currentSection = 'other';
             continue;
         }
 
-        if (lowerLine.includes('confirmado') || lowerLine.includes('vai jogar')) {
-            currentSection = 'confirmed';
+        // Se não há numeração e contém palavras-chave, pode ser cabeçalho de seção
+        if (!line.match(/^\d+/) && (
+            lowerLine.includes('talvez') ||
+            lowerLine.includes('maybe') ||
+            lowerLine.includes('dúvida') ||
+            lowerLine.includes('confirmado') ||
+            lowerLine.includes('vai jogar')
+        )) {
+            if (lowerLine.includes('talvez') || lowerLine.includes('maybe') || lowerLine.includes('dúvida')) {
+                currentSection = 'maybe';
+            } else {
+                currentSection = 'confirmed';
+            }
+            isInOutSection = false;
             continue;
         }
 
-        // Extrair jogadores da linha atual
-        const extracted = extractPlayersFromWhatsAppList(line);
-        if (extracted.length > 0) {
-            sections[currentSection as keyof typeof sections].push(...extracted);
+        // Extrair jogadores da linha atual se ela contém numeração
+        if (line.match(/^\d+/)) {
+            // Processar linha individual ao invés de chamar extractPlayersFromWhatsAppList
+            const patterns = [
+                /^(\d+)\s*[-–]\s*(.+?)(?:\s*$)/, // "01 - Miguel" ou "1 - Diego"
+                /^(\d+)\s*[.]\s*(.+?)(?:\s*$)/, // "01. Miguel" ou "1. Diego"
+                /^(\d+)\s+(.+?)(?:\s*$)/, // "01 Miguel" ou "1 Diego"
+                /^(\d+)[-–](.+?)(?:\s*$)/, // "01-Miguel" ou "1-Diego"
+            ];
+
+            let match = null;
+            let position = 0;
+
+            for (const pattern of patterns) {
+                match = line.match(pattern);
+                if (match) {
+                    position = parseInt(match[1]);
+                    break;
+                }
+            }
+
+            if (match && match[2]) {
+                let nameAndRating = match[2].trim();
+                let extractedRating = 0; // Default sem rating
+
+                // Tentar extrair rating do final do nome
+                // Padrões: "Nome 3.5", "Nome 4", "Nome - Dúvida 2.5"
+                const ratingPatterns = [
+                    /^(.+?)\s+(\d+(?:\.\d+)?)$/, // "Nome 3.5" ou "Nome 4"
+                    /^(.+?)\s*-\s*.*?\s+(\d+(?:\.\d+)?)$/, // "Nome - Info 3.5"
+                ];
+
+                let finalName = nameAndRating;
+
+                for (const ratingPattern of ratingPatterns) {
+                    const ratingMatch = nameAndRating.match(ratingPattern);
+                    if (ratingMatch) {
+                        finalName = ratingMatch[1].trim();
+                        const ratingValue = parseFloat(ratingMatch[2]);
+
+                        // Validar se o rating está no range válido (0-5)
+                        if (ratingValue >= 0 && ratingValue <= 5) {
+                            extractedRating = ratingValue;
+                        }
+                        break;
+                    }
+                }
+
+                // Limpeza do nome
+                finalName = cleanPlayerName(finalName);
+
+                // Só adicionar se o nome for válido
+                if (isValidPlayerName(finalName)) {
+                    sections[currentSection as keyof typeof sections].push({
+                        name: finalName,
+                        rating: extractedRating, // Adicionar rating extraído
+                        originalLine: line,
+                        position
+                    });
+                }
+            }
         }
     }
 

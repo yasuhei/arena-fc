@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Player } from '../hooks/usePlayers';
-import { extractPlayersFromWhatsAppList, getImportStats } from '../utils/whatsappParser';
+import { getImportStats, parseWhatsAppSections, ExtractedPlayer } from '../utils/whatsappParser';
 
 // Função para renderizar rating com barra de progresso colorida
 const renderRatingBar = (rating: number, size: string = 'w-24') => {
@@ -58,7 +58,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   const [newPlayerRating, setNewPlayerRating] = useState<number>(3);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
-  const [extractedPlayers, setExtractedPlayers] = useState<string[]>([]);
+  const [extractedPlayers, setExtractedPlayers] = useState<ExtractedPlayer[]>([]);
   const [importStats, setImportStats] = useState<any>(null);
 
   const handleAddPlayer = async (e: React.FormEvent) => {
@@ -114,13 +114,121 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
 
   // Função para extrair nomes da lista do WhatsApp
   const handleImportText = () => {
-    const extracted = extractPlayersFromWhatsAppList(importText);
-    const playerNames = extracted.map(p => p.name);
-    const existingNames = players.map(p => p.name);
-    const stats = getImportStats(extracted, existingNames);
-    
-    setExtractedPlayers(playerNames);
-    setImportStats(stats);
+    try {
+      console.log('🔍 Iniciando análise da lista...');
+      console.log('📝 Texto recebido:', importText.substring(0, 200) + '...');
+      
+      // Tentar usar a função de seções para separar jogadores confirmados dos que estão fora
+      const sections = parseWhatsAppSections(importText);
+      console.log('📊 Seções encontradas:', sections);
+      
+      // Apenas jogadores confirmados e talvez (excluir os que estão FORA)
+      const validPlayers = [...sections.confirmed, ...sections.maybe];
+      console.log('✅ Jogadores válidos encontrados:', validPlayers.length);
+      
+      // Se não encontrou jogadores válidos, usar método original como fallback
+      if (validPlayers.length === 0) {
+        console.log('⚠️ Nenhum jogador encontrado com parseWhatsAppSections, usando método original...');
+        // Fallback: usar método original que pega todos os jogadores numerados
+        const lines = importText.split('\n');
+        const fallbackPlayers = [];
+        
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+          
+          // Parar se encontrar seção FORA
+          if (trimmedLine.toLowerCase().includes('fora') && !trimmedLine.match(/^\d+\s*[-–]\s*/)) {
+            console.log('🚫 Encontrou seção FORA, parando aqui');
+            break;
+          }
+          
+          // Diferentes padrões de numeração
+          const patterns = [
+            /^(\d+)\s*[-–]\s*(.+?)(?:\s*$)/, // "01 - Miguel"
+            /^(\d+)\s*[.]\s*(.+?)(?:\s*$)/, // "01. Miguel"
+            /^(\d+)\s+(.+?)(?:\s*$)/, // "01 Miguel"
+            /^(\d+)[-–](.+?)(?:\s*$)/, // "01-Miguel"
+          ];
+          
+          for (const pattern of patterns) {
+            const match = trimmedLine.match(pattern);
+            if (match && match[2]) {
+              let nameAndRating = match[2].trim();
+              let extractedRating = 0; // Default sem rating
+              
+              // Tentar extrair rating do final do nome
+              const ratingPatterns = [
+                /^(.+?)\s+(\d+(?:\.\d+)?)$/, // "Nome 3.5" ou "Nome 4"
+                /^(.+?)\s*-\s*.*?\s+(\d+(?:\.\d+)?)$/, // "Nome - Info 3.5"
+              ];
+              
+              let finalName = nameAndRating;
+              
+              for (const ratingPattern of ratingPatterns) {
+                const ratingMatch = nameAndRating.match(ratingPattern);
+                if (ratingMatch) {
+                  finalName = ratingMatch[1].trim();
+                  const ratingValue = parseFloat(ratingMatch[2]);
+                  
+                  // Validar se o rating está no range válido (0-5)
+                  if (ratingValue >= 0 && ratingValue <= 5) {
+                    extractedRating = ratingValue;
+                  }
+                  break;
+                }
+              }
+              
+              // Limpeza básica do nome
+              finalName = finalName.replace(/\([^)]*\)/g, ''); // Remove parênteses
+              finalName = finalName.replace(/\[[^\]]*\]/g, ''); // Remove colchetes
+              finalName = finalName.replace(/[⚽🏃‍♂️👤🔥💪⭐]/g, ''); // Remove emojis
+              finalName = finalName.replace(/[.,;:!?]+$/, ''); // Remove pontuação final
+              finalName = finalName.replace(/\s+/g, ' ').trim(); // Remove espaços extras
+              
+              // Capitalizar
+              finalName = finalName.split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+              
+              if (finalName.length >= 2 && !/^\d+$/.test(finalName)) {
+                fallbackPlayers.push({ 
+                  name: finalName, 
+                  rating: extractedRating,
+                  originalLine: trimmedLine, 
+                  position: parseInt(match[1]) 
+                });
+                console.log('✅ Jogador encontrado (fallback):', finalName, 'Rating:', extractedRating);
+              }
+              break;
+            }
+          }
+        }
+        
+        console.log('📊 Total jogadores (fallback):', fallbackPlayers.length);
+        
+        const playerNames = fallbackPlayers.map(p => p.name);
+        const existingNames = players.map(p => p.name);
+        const stats = getImportStats(fallbackPlayers, existingNames);
+        
+        setExtractedPlayers(fallbackPlayers); // Passar objetos completos
+        setImportStats(stats);
+        return;
+      }
+      
+      const playerNames = validPlayers.map(p => p.name);
+      const existingNames = players.map(p => p.name);
+      const stats = getImportStats(validPlayers, existingNames);
+      
+      console.log('📊 Estatísticas finais:', stats);
+      
+      setExtractedPlayers(validPlayers); // Passar objetos completos ao invés de apenas nomes
+      setImportStats(stats);
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar lista:', error);
+      alert('Erro ao processar a lista. Tente novamente.');
+    }
   };
 
   const handleImportPlayers = async () => {
@@ -130,9 +238,19 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
     }
 
     try {
-      // Importar apenas jogadores novos com rating 0 (sem avaliação)
+      let playersWithRating = 0;
+      let playersWithoutRating = 0;
+      
+      // Importar apenas jogadores novos com rating extraído ou 0 se não tiver
       for (const playerData of importStats.newPlayers) {
-        await onAddPlayer(playerData.name, 0);
+        const rating = playerData.rating || 0; // Usar rating extraído ou 0 como padrão
+        await onAddPlayer(playerData.name, rating);
+        
+        if (rating > 0) {
+          playersWithRating++;
+        } else {
+          playersWithoutRating++;
+        }
       }
       
       // Limpar e fechar modal
@@ -141,7 +259,18 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       setImportStats(null);
       setShowImportModal(false);
       
-      alert(`${importStats.new} jogadores importados com sucesso!${importStats.duplicates > 0 ? ` (${importStats.duplicates} duplicados ignorados)` : ''}`);
+      let message = `${importStats.new} jogadores importados com sucesso!`;
+      if (playersWithRating > 0) {
+        message += `\n✅ ${playersWithRating} com rating extraído da lista`;
+      }
+      if (playersWithoutRating > 0) {
+        message += `\n⚠️ ${playersWithoutRating} sem rating (você deve avaliar)`;
+      }
+      if (importStats.duplicates > 0) {
+        message += `\n🔄 ${importStats.duplicates} duplicados ignorados`;
+      }
+      
+      alert(message);
     } catch (error) {
       alert('Erro ao importar jogadores');
     }
@@ -324,7 +453,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       {/* Modal de Importação */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border-2 border-gray-700 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-900 border-2 border-gray-700 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto mb-24">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">
                 📋 IMPORT WHATSAPP LIST
@@ -367,28 +496,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
               )}
             </div>
 
-            {/* Estatísticas da importação */}
-            {importStats && (
-              <div className="bg-gray-800 border border-gray-600 rounded-none p-4 mb-4">
-                <h4 className="text-sm font-black text-white mb-3 uppercase tracking-wider">
-                  📊 IMPORT STATISTICS:
-                </h4>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="bg-black rounded-none p-3">
-                    <div className="text-2xl font-black text-white">{importStats.total}</div>
-                    <div className="text-xs text-gray-400 uppercase">Total Found</div>
-                  </div>
-                  <div className="bg-black rounded-none p-3">
-                    <div className="text-2xl font-black text-green-400">{importStats.new}</div>
-                    <div className="text-xs text-gray-400 uppercase">New Players</div>
-                  </div>
-                  <div className="bg-black rounded-none p-3">
-                    <div className="text-2xl font-black text-yellow-400">{importStats.duplicates}</div>
-                    <div className="text-xs text-gray-400 uppercase">Duplicates</div>
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* Preview dos jogadores extraídos */}
             {extractedPlayers.length > 0 && (
@@ -397,10 +505,12 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                   📋 EXTRACTED PLAYERS ({extractedPlayers.length}):
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
-                  {extractedPlayers.map((name, idx) => {
+                  {extractedPlayers.map((playerData, idx) => {
                     const exists = players.find(p => 
-                      p.name.toLowerCase().trim() === name.toLowerCase().trim()
+                      p.name.toLowerCase().trim() === playerData.name.toLowerCase().trim()
                     );
+                    
+                    const hasRating = playerData.rating && playerData.rating > 0;
                     
                     return (
                       <div 
@@ -411,13 +521,21 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                             : 'bg-gray-800 text-white'
                         }`}
                       >
-                        {exists ? '⚠️' : '✅'} {name}
+                        <div className="flex items-center justify-between">
+                          <span>{exists ? '⚠️' : '✅'}</span>
+                          {hasRating && (
+                            <span className="text-xs bg-green-600 text-white px-1 rounded">
+                              {playerData.rating?.toFixed(1)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs mt-1">{playerData.name}</div>
                       </div>
                     );
                   })}
                 </div>
-                {extractedPlayers.some(name => 
-                  players.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim())
+                {extractedPlayers.some(playerData => 
+                  players.find(p => p.name.toLowerCase().trim() === playerData.name.toLowerCase().trim())
                 ) && (
                   <p className="text-yellow-400 text-xs mt-3 uppercase tracking-wide">
                     ⚠️ Jogadores em amarelo já existem e serão ignorados
@@ -426,20 +544,6 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
               </div>
             )}
 
-            {/* Instruções */}
-            <div className="mt-6 bg-gray-800 border border-gray-600 rounded-none p-4">
-              <h4 className="text-sm font-black text-white mb-2 uppercase tracking-wider">
-                📖 INSTRUCTIONS:
-              </h4>
-              <ul className="text-xs text-gray-300 space-y-1">
-                <li>• Cole a lista completa do WhatsApp no campo acima</li>
-                <li>• O sistema vai extrair automaticamente os nomes após os números</li>
-                <li>• Todos os jogadores serão importados SEM RATING (você deve avaliar depois)</li>
-                <li>• Jogadores sem rating aparecem com cards vermelhos</li>
-                <li>• Jogadores que já existem serão ignorados</li>
-                <li>• Funciona com formatos: "01 - Nome", "2 - Nome", "15 - Nome (info extra)"</li>
-              </ul>
-            </div>
           </div>
         </div>
       )}
