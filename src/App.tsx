@@ -522,23 +522,7 @@ function App() {
               <span className="text-3xl md:text-5xl">⚡</span>
             </h1>
             <div className="flex-1 flex justify-end">
-              <button
-                onClick={() => {
-                  // Manual AdSense cleanup
-                  const adsElements = document.querySelectorAll('.adsbygoogle, ins[data-ad-client], ins[class*="adsbygoogle"]');
-                  adsElements.forEach(el => el.remove());
-                  const scripts = document.querySelectorAll('script[src*="googlesyndication"], script[src*="adsbygoogle"]');
-                  scripts.forEach(script => script.remove());
-                  const iframes = document.querySelectorAll('iframe[src*="googleads"], iframe[src*="googlesyndication"]');
-                  iframes.forEach(iframe => iframe.remove());
-                  if ((window as any).adsbygoogle) delete (window as any).adsbygoogle;
-                  alert('🚫 Anúncios removidos! Se ainda aparecerem, limpe o cache do navegador (Ctrl+Shift+Delete)');
-                }}
-                className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-none text-xs font-bold uppercase tracking-wider transition-all"
-                title="Remover anúncios persistentes"
-              >
-                🚫 NO ADS
-              </button>
+
             </div>
           </div>
           <p className="text-center text-gray-400 text-xs md:text-sm mt-2 tracking-wide uppercase">
@@ -578,15 +562,17 @@ function App() {
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => {
-                      if (selected.size === players.length) {
+                      if (selected.size === players.length || selected.size >= 18) {
                         setSelected(new Set());
                       } else {
-                        setSelected(new Set(players.map(p => p.id)));
+                        // Selecionar apenas os primeiros 18 jogadores
+                        const first18Players = players.slice(0, 18);
+                        setSelected(new Set(first18Players.map(p => p.id)));
                       }
                     }}
                     className="bg-white hover:bg-gray-200 text-black px-3 py-2 md:px-4 md:py-2 rounded-none text-xs md:text-sm font-bold uppercase tracking-wider transition-all"
                   >
-                    {selected.size === players.length ? 'CLEAR ALL' : 'SELECT ALL'}
+                    {selected.size >= 18 || selected.size === players.length ? 'CLEAR ALL' : 'SELECT 18'}
                   </button>
                   <div className="bg-white text-black px-3 py-2 md:px-4 md:py-2 rounded-none flex items-center space-x-2">
                     <span className="text-sm md:text-base">👥</span>
