@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePlayers, Player } from './hooks/usePlayers';
 import { PlayerManager } from './components/PlayerManager';
+import { shareTeamsOnWhatsApp as shareTeamsUtil, shareAllTeamOptionsOnWhatsApp } from './utils/whatsappShare';
 
 // Função para renderizar rating com barra de progresso compacta
 const renderRatingBarCompact = (rating: number) => {
@@ -72,27 +73,23 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
   let sortedPlayers: Player[];
   
   if (variation === 0) {
-    // OPTION 1: Rating Priority - Ordenação por rating + balanceamento inteligente
+    // OPTION 1: Rating Priority - Balanceamento por menor número de jogadores primeiro, depois menor soma
     sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
     
-    // Distribuir usando algoritmo de menor soma
+    // Distribuir usando algoritmo balanceado
     for (const player of sortedPlayers) {
-      // Encontrar o time com menor soma de ratings
-      const teamSums = teams.map(team => 
-        team.reduce((sum, p) => sum + p.rating, 0)
-      );
+      // Encontrar o time com menor número de jogadores primeiro
+      const teamSizes = teams.map(team => team.length);
+      const minSize = Math.min(...teamSizes);
       
-      let minSumIndex = 0;
-      let minSum = teamSums[0];
+      // Entre os times com menor número de jogadores, escolher o de menor soma de ratings
+      const candidateTeams = teams
+        .map((team, index) => ({ team, index, size: team.length, sum: team.reduce((sum, p) => sum + p.rating, 0) }))
+        .filter(t => t.size === minSize)
+        .sort((a, b) => a.sum - b.sum);
       
-      for (let i = 1; i < teamSums.length; i++) {
-        if (teamSums[i] < minSum) {
-          minSum = teamSums[i];
-          minSumIndex = i;
-        }
-      }
-      
-      teams[minSumIndex].push(player);
+      const selectedTeamIndex = candidateTeams[0].index;
+      teams[selectedTeamIndex].push(player);
     }
     
   } else if (variation === 1) {
@@ -117,7 +114,7 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
     }
     
   } else {
-    // OPTION 3: Serpentine Draft - Padrão serpentina
+    // OPTION 3: Serpentine Draft - Padrão serpentina (melhorado)
     sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
     
     let currentTeam = 0;
@@ -127,15 +124,18 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
       teams[currentTeam].push(player);
       
       // Mover para próximo time
-      currentTeam += direction;
-      
-      // Inverter direção quando chegar no fim
-      if (currentTeam >= numTeams) {
-        currentTeam = numTeams - 1;
-        direction = -1;
-      } else if (currentTeam < 0) {
-        currentTeam = 0;
-        direction = 1;
+      if (direction === 1) {
+        currentTeam++;
+        if (currentTeam >= numTeams) {
+          currentTeam = numTeams - 1;
+          direction = -1;
+        }
+      } else {
+        currentTeam--;
+        if (currentTeam < 0) {
+          currentTeam = 0;
+          direction = 1;
+        }
       }
     }
   }
@@ -313,8 +313,8 @@ function App() {
         iframes.forEach(iframe => iframe.remove());
 
         // Clear AdSense global variables
-        if (window.adsbygoogle) {
-          delete window.adsbygoogle;
+        if ((window as any).adsbygoogle) {
+          delete (window as any).adsbygoogle;
         }
 
         // Clear any AdSense related localStorage
@@ -398,35 +398,81 @@ function App() {
   };
 
   const shareTeamsOnWhatsApp = () => {
+    console.log('🔍 Iniciando compartilhamento WhatsApp...');
+    
     let teamsToShare: Player[][] = [];
     
     if (creationMode === 'auto' && selectedExample !== null) {
       teamsToShare = teams[selectedExample];
+      console.log('📊 Modo automático - Opção selecionada:', selectedExample);
     } else if (creationMode === 'manual') {
       teamsToShare = manualTeams;
+      console.log('📊 Modo manual');
     }
     
-    // Formata a mensagem
-    let message = '⚽ *SEM PANELA FC* ⚽\n\n';
-    message += '🏆 *TEAMS FORMED* 🏆\n\n';
+    console.log('👥 Times para compartilhar:', teamsToShare);
     
-    teamsToShare.forEach((team, idx) => {
-      message += `*TEAM ${idx + 1}*\n`;
-      team.forEach((player, pIdx) => {
-        message += `${pIdx + 1}. ${player.name}\n`;
-      });
-      message += '\n';
-    });
+    if (teamsToShare.length === 0) {
+      alert('❌ Nenhum time encontrado para compartilhar!');
+      return;
+    }
     
-    message += '---\n';
-    message += 'Created with Sem Panela FC\n';
-    message += 'https://sem-panela-fc.vercel.app/';
+    // Usar a função utilitária importada
+    try {
+      shareTeamsUtil(teamsToShare);
+      console.log('✅ WhatsApp aberto com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao abrir WhatsApp:', error);
+      alert('Erro ao abrir WhatsApp. Verifique se o navegador permite pop-ups.');
+    }
+  };
+
+  const shareAllOptionsOnWhatsApp = () => {
     
-    // Codifica a mensagem para URL
-    const encodedMessage = encodeURIComponent(message);
+    if (creationMode !== 'auto') {
+      console.error('❌ Modo não é automático:', creationMode);
+      alert('❌ Esta função só está disponível no modo automático!');
+      return;
+    }
     
-    // Abre o WhatsApp
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+    if (teams.length === 0) {
+      console.error('❌ Nenhum time gerado');
+      alert('❌ Você precisa gerar os times primeiro!');
+      return;
+    }
+    
+    // Verificar se todas as opções têm times válidos
+    const validTeams = teams.filter(option => option && option.length > 0);
+    if (validTeams.length === 0) {
+      console.error('❌ Nenhuma opção de time válida');
+      alert('❌ Nenhuma opção de time válida encontrada!');
+      return;
+    }
+    
+    console.log('✅ Dados válidos, iniciando compartilhamento...');
+    
+    try {
+      shareAllTeamOptionsOnWhatsApp(teams);
+      console.log('✅ Todas as opções compartilhadas no WhatsApp!');
+    } catch (error) {
+      console.error('❌ Erro ao compartilhar opções:', error);
+      
+      // Mensagem de erro mais específica
+      let errorMessage = 'Erro ao compartilhar opções. ';
+      if (error instanceof Error) {
+        if (error.message.includes('Pop-up bloqueado')) {
+          errorMessage += 'Seu navegador está bloqueando pop-ups. Por favor, permita pop-ups para este site.';
+        } else if (error.message.includes('muito longa')) {
+          errorMessage += 'A mensagem está muito longa. Tente com menos jogadores.';
+        } else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += 'Verifique se o navegador permite pop-ups.';
+      }
+      
+      alert(errorMessage);
+    }
   };
 
   if (loading) {
@@ -485,7 +531,7 @@ function App() {
                   scripts.forEach(script => script.remove());
                   const iframes = document.querySelectorAll('iframe[src*="googleads"], iframe[src*="googlesyndication"]');
                   iframes.forEach(iframe => iframe.remove());
-                  if (window.adsbygoogle) delete window.adsbygoogle;
+                  if ((window as any).adsbygoogle) delete (window as any).adsbygoogle;
                   alert('🚫 Anúncios removidos! Se ainda aparecerem, limpe o cache do navegador (Ctrl+Shift+Delete)');
                 }}
                 className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-none text-xs font-bold uppercase tracking-wider transition-all"
@@ -807,6 +853,21 @@ function App() {
                     <p className="text-center text-xs md:text-sm landscape:text-xs text-gray-400 mt-3 md:mt-4 landscape:mt-2 uppercase tracking-wide group-hover:text-white transition-colors">Click to view details and scores</p>
                   </div>
                 ))}
+                
+                {/* Botão para compartilhar todas as 3 opções */}
+                <div className="text-center mt-6">
+                  <button 
+                    onClick={shareAllOptionsOnWhatsApp}
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2 mx-auto"
+                    style={{ letterSpacing: '0.15em' }}
+                  >
+                    <span className="text-2xl">📱</span>
+                    SHARE ALL 3 OPTIONS
+                  </button>
+                  <p className="text-xs text-gray-400 mt-2 uppercase tracking-wide">
+                    Let everyone vote for their favorite option!
+                  </p>
+                </div>
               </div>
             ) : (
               <div>
@@ -817,6 +878,7 @@ function App() {
                   ← BACK TO OPTIONS
                 </button>
                 {(() => {
+                  if (selectedExample === null) return null;
                   const example = teams[selectedExample];
                   return (
                     <div>
@@ -826,8 +888,8 @@ function App() {
                         {selectedExample === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
-                        {example.map((team, tIdx) => {
-                          const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
+                        {example.map((team: Player[], tIdx: number) => {
+                          const teamRatingSum = team.reduce((sum: number, player: Player) => sum + player.rating, 0);
                           const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
                           
                           return (
@@ -836,7 +898,7 @@ function App() {
                                 TEAM {tIdx + 1}
                               </h4>
                               <ul className="space-y-1">
-                                {team.map(player => (
+                                {team.map((player: Player) => (
                                   <li key={player.id} className="bg-gray-900 rounded-none px-2 py-1 text-xs shadow-sm">
                                     <div className="flex items-center justify-between gap-1">
                                       <div className="flex-1 min-w-0">
@@ -846,7 +908,7 @@ function App() {
                                         </div>
                                       </div>
                                       <div className="flex flex-col gap-0.5">
-                                        {example.map((_, targetIdx) => targetIdx !== tIdx && (
+                                        {example.map((_: Player[], targetIdx: number) => targetIdx !== tIdx && (
                                           <button
                                             key={targetIdx}
                                             onClick={() => movePlayerInAutoTeams(player, tIdx, targetIdx, selectedExample)}
@@ -874,14 +936,14 @@ function App() {
                       
                       {/* Botões Confirmar e Compartilhar */}
                       <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-                        <button 
+                        {/* <button 
                           onClick={shareTeamsOnWhatsApp}
                           className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
                           style={{ letterSpacing: '0.15em' }}
                         >
                           <span className="text-2xl">📱</span>
                           SHARE ON WHATSAPP
-                        </button>
+                        </button> */}
                         <button 
                           onClick={confirmTeams}
                           className="bg-white hover:bg-gray-100 text-black px-10 py-4 md:px-16 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105"
@@ -895,7 +957,7 @@ function App() {
                 })()}
               </div>
             )}
-              </>
+          </>
             )}
           </div>
         )}

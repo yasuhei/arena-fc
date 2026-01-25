@@ -115,20 +115,14 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   // Função para extrair nomes da lista do WhatsApp
   const handleImportText = () => {
     try {
-      console.log('🔍 Iniciando análise da lista...');
-      console.log('📝 Texto recebido:', importText.substring(0, 200) + '...');
-      
       // Tentar usar a função de seções para separar jogadores confirmados dos que estão fora
       const sections = parseWhatsAppSections(importText);
-      console.log('📊 Seções encontradas:', sections);
       
       // Apenas jogadores confirmados e talvez (excluir os que estão FORA)
       const validPlayers = [...sections.confirmed, ...sections.maybe];
-      console.log('✅ Jogadores válidos encontrados:', validPlayers.length);
       
       // Se não encontrou jogadores válidos, usar método original como fallback
       if (validPlayers.length === 0) {
-        console.log('⚠️ Nenhum jogador encontrado com parseWhatsAppSections, usando método original...');
         // Fallback: usar método original que pega todos os jogadores numerados
         const lines = importText.split('\n');
         const fallbackPlayers = [];
@@ -139,7 +133,6 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
           
           // Parar se encontrar seção FORA
           if (trimmedLine.toLowerCase().includes('fora') && !trimmedLine.match(/^\d+\s*[-–]\s*/)) {
-            console.log('🚫 Encontrou seção FORA, parando aqui');
             break;
           }
           
@@ -198,35 +191,28 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                   originalLine: trimmedLine, 
                   position: parseInt(match[1]) 
                 });
-                console.log('✅ Jogador encontrado (fallback):', finalName, 'Rating:', extractedRating);
               }
               break;
             }
           }
         }
         
-        console.log('📊 Total jogadores (fallback):', fallbackPlayers.length);
-        
-        const playerNames = fallbackPlayers.map(p => p.name);
         const existingNames = players.map(p => p.name);
         const stats = getImportStats(fallbackPlayers, existingNames);
         
-        setExtractedPlayers(fallbackPlayers); // Passar objetos completos
+        setExtractedPlayers(fallbackPlayers);
         setImportStats(stats);
         return;
       }
       
-      const playerNames = validPlayers.map(p => p.name);
       const existingNames = players.map(p => p.name);
       const stats = getImportStats(validPlayers, existingNames);
       
-      console.log('📊 Estatísticas finais:', stats);
-      
-      setExtractedPlayers(validPlayers); // Passar objetos completos ao invés de apenas nomes
+      setExtractedPlayers(validPlayers);
       setImportStats(stats);
       
     } catch (error) {
-      console.error('❌ Erro ao processar lista:', error);
+      console.error('Erro ao processar lista:', error);
       alert('Erro ao processar a lista. Tente novamente.');
     }
   };

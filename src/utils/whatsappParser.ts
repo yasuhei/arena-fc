@@ -111,7 +111,6 @@ export const parseWhatsAppSections = (text: string) => {
     };
 
     let currentSection = 'confirmed';
-    let isInOutSection = false;
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -120,7 +119,6 @@ export const parseWhatsAppSections = (text: string) => {
         // Detectar início da seção FORA
         if (lowerLine.includes('fora') && !lowerLine.match(/^\d+\s*[-–]\s*/)) {
             currentSection = 'out';
-            isInOutSection = true;
             continue;
         }
 
@@ -129,7 +127,6 @@ export const parseWhatsAppSections = (text: string) => {
             lowerLine.includes('prioridade') ||
             lowerLine.includes('observação') ||
             lowerLine.includes('obs:')) {
-            isInOutSection = false;
             currentSection = 'other';
             continue;
         }
@@ -147,7 +144,6 @@ export const parseWhatsAppSections = (text: string) => {
             } else {
                 currentSection = 'confirmed';
             }
-            isInOutSection = false;
             continue;
         }
 
