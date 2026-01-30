@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Player } from '../hooks/usePlayers';
 import { getImportStats, parseWhatsAppSections, ExtractedPlayer } from '../utils/whatsappParser';
 
@@ -60,6 +61,9 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   const [importText, setImportText] = useState('');
   const [extractedPlayers, setExtractedPlayers] = useState<ExtractedPlayer[]>([]);
   const [importStats, setImportStats] = useState<any>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [showClearAllModal, setShowClearAllModal] = useState(false);
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +75,8 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       setNewPlayerRating(3);
       setShowAddForm(false);
     } catch (error) {
-      alert('Erro ao adicionar jogador');
+      setConfirmMessage('❌ Erro ao adicionar jogador');
+      setShowConfirmModal(true);
     }
   };
 
@@ -85,7 +90,8 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       setNewPlayerName('');
       setNewPlayerRating(3);
     } catch (error) {
-      alert('Erro ao atualizar jogador');
+      setConfirmMessage('❌ Erro ao atualizar jogador');
+      setShowConfirmModal(true);
     }
   };
 
@@ -107,7 +113,8 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       try {
         await onRemovePlayer(player.id);
       } catch (error) {
-        alert('Erro ao remover jogador');
+        setConfirmMessage('❌ Erro ao remover jogador');
+        setShowConfirmModal(true);
       }
     }
   };
@@ -213,13 +220,15 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       
     } catch (error) {
       console.error('Erro ao processar lista:', error);
-      alert('Erro ao processar a lista. Tente novamente.');
+      setConfirmMessage('❌ Erro ao processar a lista. Tente novamente.');
+      setShowConfirmModal(true);
     }
   };
 
   const handleImportPlayers = async () => {
     if (!importStats || importStats.new === 0) {
-      alert('Nenhum jogador novo para importar!');
+      setConfirmMessage('❌ Nenhum jogador novo para importar!');
+      setShowConfirmModal(true);
       return;
     }
 
@@ -245,20 +254,22 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       setImportStats(null);
       setShowImportModal(false);
       
-      let message = `${importStats.new} jogadores importados com sucesso!`;
+      let message = `✅ ${importStats.new} jogadores importados com sucesso!`;
       if (playersWithRating > 0) {
-        message += `\n✅ ${playersWithRating} com rating extraído da lista`;
+        message += `\n\n⭐ ${playersWithRating} com rating extraído da lista`;
       }
       if (playersWithoutRating > 0) {
-        message += `\n⚠️ ${playersWithoutRating} sem rating (você deve avaliar)`;
+        message += `\n\n⚠️ ${playersWithoutRating} sem rating (você deve avaliar)`;
       }
       if (importStats.duplicates > 0) {
-        message += `\n🔄 ${importStats.duplicates} duplicados ignorados`;
+        message += `\n\n🔄 ${importStats.duplicates} duplicados ignorados`;
       }
       
-      alert(message);
+      setConfirmMessage(message);
+      setShowConfirmModal(true);
     } catch (error) {
-      alert('Erro ao importar jogadores');
+      setConfirmMessage('❌ Erro ao importar jogadores');
+      setShowConfirmModal(true);
     }
   };
 
@@ -267,6 +278,26 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
     setImportText('');
     setExtractedPlayers([]);
     setImportStats(null);
+  };
+
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    setConfirmMessage('');
+  };
+
+  const handleClearAll = async () => {
+    try {
+      for (const player of players) {
+        await onRemovePlayer(player.id);
+      }
+      setConfirmMessage('✅ Todos os jogadores foram removidos!');
+      setShowConfirmModal(true);
+      setShowClearAllModal(false);
+    } catch (error) {
+      setConfirmMessage('❌ Erro ao remover jogadores');
+      setShowConfirmModal(true);
+      setShowClearAllModal(false);
+    }
   };
 
   return (
@@ -284,18 +315,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
           </button>
           {players.length > 0 && (
             <button
-              onClick={async () => {
-                if (confirm(`Tem certeza que deseja remover TODOS os ${players.length} jogadores?`)) {
-                  try {
-                    for (const player of players) {
-                      await onRemovePlayer(player.id);
-                    }
-                    alert('Todos os jogadores foram removidos!');
-                  } catch (error) {
-                    alert('Erro ao remover jogadores');
-                  }
-                }
-              }}
+              onClick={() => setShowClearAllModal(true)}
               className="bg-red-700 hover:bg-red-600 text-white px-4 py-3 md:px-6 md:py-3 rounded-none font-bold text-sm md:text-base uppercase tracking-wider transition-all"
             >
               🗑️ CLEAR ALL
@@ -436,10 +456,13 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
         </div>
       )}
 
-      {/* Modal de Importação */}
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border-2 border-gray-700 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto mb-24">
+      {/* Modal de Importação - Renderizado usando Portal para garantir z-index máximo */}
+      {showImportModal && createPortal(
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4"
+          style={{ zIndex: 999999 }}
+        >
+          <div className="bg-gray-900 border-2 border-gray-700 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">
                 📋 IMPORT WHATSAPP LIST
@@ -481,8 +504,6 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                 </button>
               )}
             </div>
-
-
 
             {/* Preview dos jogadores extraídos */}
             {extractedPlayers.length > 0 && (
@@ -531,7 +552,73 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
             )}
 
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Confirmação CLEAR ALL - Renderizado usando Portal */}
+      {showClearAllModal && createPortal(
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4"
+          style={{ zIndex: 999999 }}
+        >
+          <div className="bg-gray-900 border-2 border-red-600 rounded-none p-6 w-full max-w-md">
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-white font-black text-xl mb-4 uppercase tracking-wider">
+                CONFIRMAR REMOÇÃO
+              </h3>
+              <div className="text-gray-300 font-bold text-base mb-6">
+                Tem certeza que deseja remover <span className="text-red-400 font-black">TODOS os {players.length} jogadores</span>?
+                <br /><br />
+                <span className="text-red-400 text-sm uppercase tracking-wide">Esta ação não pode ser desfeita!</span>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowClearAllModal(false)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                >
+                  ✕ CANCELAR
+                </button>
+                <button
+                  onClick={handleClearAll}
+                  className="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+                >
+                  🗑️ REMOVER TODOS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Confirmação - Renderizado usando Portal */}
+      {showConfirmModal && createPortal(
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4"
+          style={{ zIndex: 999999 }}
+        >
+          <div className="bg-gray-900 border-2 border-gray-700 rounded-none p-6 w-full max-w-md">
+            <div className="text-center">
+              <div className="text-4xl mb-4">
+                {confirmMessage.includes('✅') ? '🎉' : 
+                 confirmMessage.includes('❌') ? '⚠️' : 
+                 '📋'}
+              </div>
+              <div className="text-white font-black text-lg mb-6 whitespace-pre-line">
+                {confirmMessage}
+              </div>
+              <button
+                onClick={closeConfirmModal}
+                className="bg-white hover:bg-gray-200 text-black px-8 py-3 rounded-none font-black uppercase tracking-wider transition-all"
+              >
+                ✓ OK
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

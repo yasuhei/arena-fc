@@ -1138,7 +1138,7 @@ function App() {
         )}
 
         {/* Rodapé com links importantes */}
-        <footer className="text-center text-gray-400 text-xs py-4 md:py-6 border-t border-gray-800 bg-black bg-opacity-80 backdrop-blur-md relative z-10">
+        <footer className="text-center text-gray-400 text-xs py-4 md:py-6 border-t border-gray-800 bg-black bg-opacity-80 backdrop-blur-md relative">
           <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-6 space-y-2 sm:space-y-0 mb-3 uppercase tracking-wider">
             <a 
               href="/landing-sem-panela-fc.html" 
