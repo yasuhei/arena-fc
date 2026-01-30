@@ -38,7 +38,7 @@ const renderRatingBar = (rating: number, size: string = 'w-24') => {
       </div>
       <div className="flex flex-col items-start min-w-[60px]">
         <span className="text-xs font-black text-white leading-none">{rating.toFixed(1)}</span>
-        <span className="text-xs font-bold text-gray-400 uppercase leading-none">{label}</span>
+        <span className="text-xs font-bold text-gray-400 uppercase leading-none pt-2">{label}</span>
       </div>
     </div>
   );
