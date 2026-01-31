@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Player } from '../hooks/usePlayers';
 import { getImportStats, parseWhatsAppSections, ExtractedPlayer } from '../utils/whatsappParser';
 
@@ -53,6 +52,8 @@ interface PlayerManagerProps {
 }
 
 export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePlayer }: PlayerManagerProps) => {
+  console.log('🎮 PlayerManager renderizando com', players.length, 'jogadores');
+  
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -457,7 +458,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       )}
 
       {/* Modal de Importação - Renderizado usando Portal para garantir z-index máximo */}
-      {showImportModal && createPortal(
+      {showImportModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4"
           style={{ zIndex: 999999 }}
@@ -552,12 +553,11 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
             )}
 
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* Modal de Confirmação CLEAR ALL - Renderizado usando Portal */}
-      {showClearAllModal && createPortal(
+      {showClearAllModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4"
           style={{ zIndex: 999999 }}
@@ -589,12 +589,11 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
               </div>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* Modal de Confirmação - Renderizado usando Portal */}
-      {showConfirmModal && createPortal(
+      {showConfirmModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4"
           style={{ zIndex: 999999 }}
@@ -617,8 +616,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
               </button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   );

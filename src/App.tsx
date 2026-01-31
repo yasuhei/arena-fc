@@ -144,7 +144,11 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
 }
 
 function App() {
+  console.log('🚀 App iniciando...');
+  
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers();
+  
+  console.log('📊 Estado atual:', { players: players.length, loading });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [teams, setTeams] = useState<Player[][][]>([]);
   const [selectedExample, setSelectedExample] = useState<number | null>(null);
@@ -476,12 +480,15 @@ function App() {
   };
 
   if (loading) {
+    console.log('⏳ App em loading...');
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 flex items-center justify-center">
         <div className="text-white text-2xl font-black uppercase tracking-wider">LOADING PLAYERS...</div>
       </div>
     );
   }
+
+  console.log('✅ App renderizando interface principal...');
 
 
 
