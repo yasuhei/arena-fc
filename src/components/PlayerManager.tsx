@@ -52,8 +52,6 @@ interface PlayerManagerProps {
 }
 
 export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePlayer }: PlayerManagerProps) => {
-  console.log('🎮 PlayerManager renderizando com', players.length, 'jogadores');
-  
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [newPlayerName, setNewPlayerName] = useState('');

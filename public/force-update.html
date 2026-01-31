@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forçar Atualização - Sem Panela FC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        h1 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+        }
+
+        .success {
+            background: #16a34a;
+        }
+
+        .success:hover {
+            background: #15803d;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔄 Forçar Atualização</h1>
+        <p>Se o Sem Panela FC não está carregando corretamente, use os botões abaixo para limpar o cache e forçar uma
+            atualização:</p>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <button class="button" onclick="clearCache()">
+            🗑️ Limpar Cache
+        </button>
+
+        <button class="button" onclick="forceReload()">
+            🔄 Reload Completo
+        </button>
+
+        <button class="button success" onclick="goToApp()">
+            🚀 Ir para o App
+        </button>
+
+        <hr style="margin: 30px 0; border-color: #333;">
+
+        <h3>Instruções:</h3>
+        <ol style="text-align: left; max-width: 400px;">
+            <li>Clique em "Limpar Cache" primeiro</li>
+            <li>Aguarde a confirmação</li>
+            <li>Clique em "Reload Completo"</li>
+            <li>Vá para o app</li>
+        </ol>
+
+        <p style="font-size: 12px; color: #888; margin-top: 30px;">
+            Se ainda tiver problemas, tente:<br>
+            • Fechar e abrir o navegador<br>
+            • Usar modo anônimo/privado<br>
+            • Limpar dados do site nas configurações do navegador
+        </p>
+    </div>
+
+    <script>
+        function showStatus(message, isSuccess = false) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.innerHTML = message;
+            status.style.background = isSuccess ? 'rgba(22, 163, 74, 0.3)' : 'rgba(220, 38, 38, 0.3)';
+        }
+
+        async function clearCache() {
+            showStatus('<div class="loading"></div> Limpando cache...');
+
+            try {
+                // Limpar localStorage
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // Limpar Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+
+                // Limpar caches
+                if ('caches' in window) {
+                    const names = await caches.keys();
+                    for (let name of names) {
+                        await caches.delete(name);
+                    }
+                }
+
+                showStatus('✅ Cache limpo com sucesso!', true);
+
+            } catch (error) {
+                showStatus('❌ Erro ao limpar cache: ' + error.message);
+            }
+        }
+
+        function forceReload() {
+            showStatus('<div class="loading"></div> Recarregando...');
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1000);
+        }
+
+        function goToApp() {
+            window.location.href = '/';
+        }
+
+        // Auto-detectar problemas
+        window.addEventListener('load', () => {
+            // Verificar se há Service Workers problemáticos
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    if (registrations.length > 1) {
+                        showStatus('⚠️ Múltiplos Service Workers detectados. Recomendado limpar cache.');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
