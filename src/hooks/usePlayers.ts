@@ -5,6 +5,7 @@ export interface Player {
     id: string;
     name: string;
     rating: number; // 0 a 5
+    isKeyPlayer: boolean;
 }
 
 // Chaves para localStorage
@@ -38,7 +39,10 @@ export const usePlayers = () => {
                 const data = JSON.parse(stored);
                 // Verificar se é da mesma sessão
                 if (data.sessionId === sessionId && data.players) {
-                    return data.players;
+                    return data.players.map((p: any) => ({
+                        ...p,
+                        isKeyPlayer: p.isKeyPlayer ?? false
+                    }));
                 }
             }
         } catch (err) {
@@ -61,11 +65,12 @@ export const usePlayers = () => {
     };
 
     // Adicionar novo jogador
-    const addPlayer = async (name: string, rating: number) => {
+    const addPlayer = async (name: string, rating: number, isKeyPlayer: boolean = false) => {
         const newPlayer: Player = {
             id: generateId(),
             name,
-            rating
+            rating,
+            isKeyPlayer
         };
 
         setPlayers(prev => {
@@ -78,8 +83,8 @@ export const usePlayers = () => {
     };
 
     // Atualizar jogador
-    const updatePlayer = async (id: string, name: string, rating: number) => {
-        const updatedPlayer: Player = { id, name, rating };
+    const updatePlayer = async (id: string, name: string, rating: number, isKeyPlayer: boolean = false) => {
+        const updatedPlayer: Player = { id, name, rating, isKeyPlayer };
 
         setPlayers(prev => {
             const updated = prev.map(p => p.id === id ? updatedPlayer : p);

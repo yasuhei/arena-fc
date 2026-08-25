@@ -40,6 +40,34 @@ const renderRatingBarCompact = (rating: number) => {
   );
 };
 
+function distributeKeyPlayers(teams: Player[][], keyPlayers: Player[]): Player[][] {
+  const result = teams.map(team => [...team]);
+  const sorted = [...keyPlayers].sort((a, b) => b.rating - a.rating);
+
+  for (const kp of sorted) {
+    const teamsWithoutKey = result
+      .map((team, idx) => ({ team, idx }))
+      .filter(({ team }) => !team.some(p => p.isKeyPlayer ?? false));
+
+    const candidates = teamsWithoutKey.length > 0
+      ? teamsWithoutKey
+      : result.map((team, idx) => ({ team, idx }));
+
+    const best = candidates.reduce((best, curr) => {
+      if (curr.team.length !== best.team.length) {
+        return curr.team.length < best.team.length ? curr : best;
+      }
+      const bestTotal = best.team.reduce((s, p) => s + p.rating, 0);
+      const currTotal = curr.team.reduce((s, p) => s + p.rating, 0);
+      return currTotal < bestTotal ? curr : best;
+    });
+
+    result[best.idx].push(kp);
+  }
+
+  return result;
+}
+
 function createBalancedTeams(selected: Set<string>, players: Player[], variation: number = 0): Player[][] {
   const available = players.filter(p => selected.has(p.id));
   const total = available.length;
@@ -60,6 +88,9 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
 
   const teams: Player[][] = Array.from({ length: numTeams }, () => []);
 
+  const keyPlayers = available.filter(p => p.isKeyPlayer ?? false);
+  const regularPlayers = available.filter(p => !(p.isKeyPlayer ?? false));
+
   // Função para embaralhar array
   const shuffleArray = (array: Player[]) => {
     const shuffled = [...array];
@@ -74,7 +105,7 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
   
   if (variation === 0) {
     // OPTION 1: Rating Priority - Balanceamento por menor número de jogadores primeiro, depois menor soma
-    sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
+    sortedPlayers = [...regularPlayers].sort((a, b) => b.rating - a.rating);
     
     // Distribuir usando algoritmo balanceado
     for (const player of sortedPlayers) {
@@ -94,9 +125,9 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
     
   } else if (variation === 1) {
     // OPTION 2: Mixed Shuffle - Embaralhar por níveis
-    const highRated = available.filter(p => p.rating >= 3.5);
-    const midRated = available.filter(p => p.rating >= 2.0 && p.rating < 3.5);
-    const lowRated = available.filter(p => p.rating < 2.0);
+    const highRated = regularPlayers.filter(p => p.rating >= 3.5);
+    const midRated = regularPlayers.filter(p => p.rating >= 2.0 && p.rating < 3.5);
+    const lowRated = regularPlayers.filter(p => p.rating < 2.0);
     
     // Embaralhar cada grupo separadamente
     const shuffledHigh = shuffleArray(highRated);
@@ -115,7 +146,7 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
     
   } else {
     // OPTION 3: Serpentine Draft - Padrão serpentina (melhorado)
-    sortedPlayers = [...available].sort((a, b) => b.rating - a.rating);
+    sortedPlayers = [...regularPlayers].sort((a, b) => b.rating - a.rating);
     
     let currentTeam = 0;
     let direction = 1; // 1 para frente, -1 para trás
@@ -140,7 +171,9 @@ function createBalancedTeams(selected: Set<string>, players: Player[], variation
     }
   }
 
-  return teams.filter(team => team.length > 0);
+  return distributeKeyPlayers(teams, keyPlayers)
+    .filter(team => team.length > 0)
+    .map(team => shuffleArray(team));
 }
 
 function App() {
@@ -611,7 +644,7 @@ function App() {
                         className="form-checkbox h-5 w-5 text-white bg-black border-2 border-gray-600 rounded-none focus:ring-white flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm md:text-base text-white truncate uppercase tracking-wide">{player.name}</p>
+                        <p className="font-bold text-sm md:text-base text-white truncate uppercase tracking-wide">{(player.isKeyPlayer ?? false) ? '⭐ ' : ''}{player.name}</p>
                         <div className="flex items-center space-x-1 mt-1">
                           <div className="flex items-center justify-center mt-1">
                             {renderRatingBarCompact(player.rating)}
@@ -693,7 +726,7 @@ function App() {
                       {players.filter(p => selected.has(p.id) && !manualTeams.some(team => team.find(tp => tp.id === p.id))).map(player => (
                         <div key={player.id} className="bg-black border border-gray-600 rounded-none p-3 flex items-center justify-between">
                           <div>
-                            <p className="font-black text-white text-sm uppercase">{player.name}</p>
+                            <p className="font-black text-white text-sm uppercase">{(player.isKeyPlayer ?? false) ? '⭐ ' : ''}{player.name}</p>
                             <div className="flex items-center justify-center mt-1">
                               {renderRatingBarCompact(player.rating)}
                             </div>
@@ -736,7 +769,7 @@ function App() {
                             {team.map(player => (
                               <div key={player.id} className="bg-gray-900 border border-gray-700 rounded-none p-2 flex items-center justify-between">
                                 <div>
-                                  <p className="font-black text-white text-sm uppercase">{player.name}</p>
+                                  <p className="font-black text-white text-sm uppercase">{(player.isKeyPlayer ?? false) ? '⭐ ' : ''}{player.name}</p>
                                   <div className="flex items-center justify-center mt-1">
                                     {renderRatingBarCompact(player.rating)}
                                   </div>
@@ -888,7 +921,7 @@ function App() {
                                   <li key={player.id} className="bg-gray-900 rounded-none px-2 py-1 text-xs shadow-sm">
                                     <div className="flex items-center justify-between gap-1">
                                       <div className="flex-1 min-w-0">
-                                        <span className="font-bold truncate block text-xs text-white uppercase">{player.name}</span>
+                                        <span className="font-bold truncate block text-xs text-white uppercase">{(player.isKeyPlayer ?? false) ? '⭐ ' : ''}{player.name}</span>
                                         <div className="flex items-center justify-center mt-1">
                                           {renderRatingBarCompact(player.rating)}
                                         </div>
