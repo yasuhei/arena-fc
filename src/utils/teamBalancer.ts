@@ -72,6 +72,7 @@ export function createBalancedTeams(
     if (numTeams === 3) {
         /*
          * Com 3 times:
+        
          *
          * Time 1 → Fernando
          * Time 2 → Fabiano
