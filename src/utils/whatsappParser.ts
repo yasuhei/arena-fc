@@ -2,10 +2,18 @@
 
 export interface ExtractedPlayer {
     name: string;
-    rating?: number; // Rating opcional extraído da lista
+    rating?: number;
+    isKeyPlayer?: boolean;
     originalLine: string;
     position: number;
 }
+
+const DEFAULT_KEY_PLAYER_PATTERNS = ['fabiano', 'fernando', 'gui', 'guilherme', 'robert'];
+
+export const detectKeyPlayer = (name: string): boolean => {
+    const lower = name.toLowerCase();
+    return DEFAULT_KEY_PLAYER_PATTERNS.some(pattern => lower.includes(pattern));
+};
 
 export const extractPlayersFromWhatsAppList = (text: string): ExtractedPlayer[] => {
     const lines = text.split('\n');
@@ -35,7 +43,7 @@ export const extractPlayersFromWhatsAppList = (text: string): ExtractedPlayer[] 
         }
 
         if (match && match[2]) {
-            let name = match[2].trim();
+            let name = match[2].trim().replace(/[^a-zA-ZÀ-ÿ0-9\s\-']/g, '').trim();
 
             // Limpeza do nome
             name = cleanPlayerName(name);
@@ -44,6 +52,7 @@ export const extractPlayersFromWhatsAppList = (text: string): ExtractedPlayer[] 
             if (isValidPlayerName(name)) {
                 extractedPlayers.push({
                     name,
+                    isKeyPlayer: detectKeyPlayer(name),
                     originalLine: line,
                     position
                 });
@@ -62,8 +71,8 @@ const cleanPlayerName = (name: string): string => {
     // Remove informações entre colchetes
     name = name.replace(/\[[^\]]*\]/g, '');
 
-    // Remove emojis comuns
-    name = name.replace(/[⚽🏃‍♂️👤🔥💪⭐]/g, '');
+    // Remove caracteres não alfanuméricos (emojis, símbolos, etc.)
+    name = name.replace(/[^a-zA-ZÀ-ÿ0-9\s\-']/g, '');
 
     // Remove caracteres especiais no final
     name = name.replace(/[.,;:!?]+$/, '');
@@ -202,7 +211,8 @@ export const parseWhatsAppSections = (text: string) => {
                 if (isValidPlayerName(finalName)) {
                     sections[currentSection as keyof typeof sections].push({
                         name: finalName,
-                        rating: extractedRating, // Adicionar rating extraído
+                        rating: extractedRating,
+                        isKeyPlayer: detectKeyPlayer(finalName),
                         originalLine: line,
                         position
                     });
