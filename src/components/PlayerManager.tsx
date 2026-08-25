@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Player } from '../hooks/usePlayers';
-import { getImportStats, parseWhatsAppSections, ExtractedPlayer } from '../utils/whatsappParser';
+import { getImportStats, parseWhatsAppSections, detectKeyPlayer, ExtractedPlayer } from '../utils/whatsappParser';
 
 // Função para renderizar rating com barra de progresso colorida
 const renderRatingBar = (rating: number, size: string = 'w-24') => {
@@ -46,8 +46,8 @@ const renderRatingBar = (rating: number, size: string = 'w-24') => {
 
 interface PlayerManagerProps {
   players: Player[];
-  onAddPlayer: (name: string, rating: number) => Promise<Player>;
-  onUpdatePlayer: (id: string, name: string, rating: number) => Promise<Player>;
+  onAddPlayer: (name: string, rating: number, isKeyPlayer?: boolean) => Promise<Player>;
+  onUpdatePlayer: (id: string, name: string, rating: number, isKeyPlayer?: boolean) => Promise<Player>;
   onRemovePlayer: (id: string) => Promise<void>;
 }
 
@@ -63,15 +63,17 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [showClearAllModal, setShowClearAllModal] = useState(false);
+  const [newPlayerIsKeyPlayer, setNewPlayerIsKeyPlayer] = useState<boolean>(false);
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlayerName.trim()) return;
 
     try {
-      await onAddPlayer(newPlayerName.trim(), newPlayerRating);
+      await onAddPlayer(newPlayerName.trim(), newPlayerRating, newPlayerIsKeyPlayer);
       setNewPlayerName('');
       setNewPlayerRating(3);
+      setNewPlayerIsKeyPlayer(false);
       setShowAddForm(false);
     } catch (error) {
       setConfirmMessage('❌ Erro ao adicionar jogador');
@@ -84,10 +86,11 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
     if (!editingPlayer || !newPlayerName.trim()) return;
 
     try {
-      await onUpdatePlayer(editingPlayer.id, newPlayerName.trim(), newPlayerRating);
+      await onUpdatePlayer(editingPlayer.id, newPlayerName.trim(), newPlayerRating, newPlayerIsKeyPlayer);
       setEditingPlayer(null);
       setNewPlayerName('');
       setNewPlayerRating(3);
+      setNewPlayerIsKeyPlayer(false);
     } catch (error) {
       setConfirmMessage('❌ Erro ao atualizar jogador');
       setShowConfirmModal(true);
@@ -98,6 +101,7 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
     setEditingPlayer(player);
     setNewPlayerName(player.name);
     setNewPlayerRating(player.rating);
+    setNewPlayerIsKeyPlayer(player.isKeyPlayer ?? false);
     setShowAddForm(false);
   };
 
@@ -105,6 +109,15 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
     setEditingPlayer(null);
     setNewPlayerName('');
     setNewPlayerRating(3);
+    setNewPlayerIsKeyPlayer(false);
+  };
+
+  const handleToggleKeyPlayer = async (player: Player) => {
+    try {
+      await onUpdatePlayer(player.id, player.name, player.rating, !(player.isKeyPlayer ?? false));
+    } catch (error) {
+      // silent
+    }
   };
 
   const handleRemove = async (player: Player) => {
@@ -179,11 +192,10 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
               }
               
               // Limpeza básica do nome
-              finalName = finalName.replace(/\([^)]*\)/g, ''); // Remove parênteses
-              finalName = finalName.replace(/\[[^\]]*\]/g, ''); // Remove colchetes
-              finalName = finalName.replace(/[⚽🏃‍♂️👤🔥💪⭐]/g, ''); // Remove emojis
-              finalName = finalName.replace(/[.,;:!?]+$/, ''); // Remove pontuação final
-              finalName = finalName.replace(/\s+/g, ' ').trim(); // Remove espaços extras
+              finalName = finalName.replace(/\([^)]*\)/g, '');
+              finalName = finalName.replace(/\[[^\]]*\]/g, '');
+              finalName = finalName.replace(/[^a-zA-ZÀ-ÿ0-9\s\-']/g, '');
+              finalName = finalName.replace(/\s+/g, ' ').trim();
               
               // Capitalizar
               finalName = finalName.split(' ')
@@ -191,11 +203,12 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                 .join(' ');
               
               if (finalName.length >= 2 && !/^\d+$/.test(finalName)) {
-                fallbackPlayers.push({ 
-                  name: finalName, 
+                fallbackPlayers.push({
+                  name: finalName,
                   rating: extractedRating,
-                  originalLine: trimmedLine, 
-                  position: parseInt(match[1]) 
+                  isKeyPlayer: detectKeyPlayer(finalName),
+                  originalLine: trimmedLine,
+                  position: parseInt(match[1])
                 });
               }
               break;
@@ -237,8 +250,8 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
       
       // Importar apenas jogadores novos com rating extraído ou 0 se não tiver
       for (const playerData of importStats.newPlayers) {
-        const rating = playerData.rating || 0; // Usar rating extraído ou 0 como padrão
-        await onAddPlayer(playerData.name, rating);
+        const rating = playerData.rating || 0;
+        await onAddPlayer(playerData.name, rating, playerData.isKeyPlayer ?? false);
         
         if (rating > 0) {
           playersWithRating++;
@@ -386,7 +399,16 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                 })}
               </select>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newPlayerIsKeyPlayer}
+                  onChange={(e) => setNewPlayerIsKeyPlayer(e.target.checked)}
+                  className="form-checkbox h-4 w-4 bg-black border-2 border-gray-600 rounded-none focus:ring-yellow-500"
+                />
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">⭐ Jogador-chave</span>
+              </label>
               <button
                 type="submit"
                 className="bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
@@ -420,13 +442,26 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-black text-white text-base md:text-lg uppercase tracking-wide">{player.name}</p>
-                  
+                  {(player.isKeyPlayer ?? false) && (
+                    <span className="text-xs bg-yellow-500 text-black font-black px-1 py-0.5 uppercase tracking-wider">KEY</span>
+                  )}
                 </div>
                 <div className="mt-3">
                   {renderRatingBar(player.rating, 'w-32')}
                 </div>
               </div>
               <div className="flex gap-1">
+                <button
+                  onClick={() => handleToggleKeyPlayer(player)}
+                  className={`w-7 h-7 rounded-none text-sm font-black transition-all flex items-center justify-center ${
+                    (player.isKeyPlayer ?? false)
+                      ? 'bg-yellow-500 text-black'
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-400'
+                  }`}
+                  title={(player.isKeyPlayer ?? false) ? 'Remover jogador-chave' : 'Marcar como jogador-chave'}
+                >
+                  ⭐
+                </button>
                 <button
                   onClick={() => startEdit(player)}
                   className={`${hasNoRating ? 'bg-red-600 hover:bg-red-500' : 'bg-white hover:bg-gray-200'} ${hasNoRating ? 'text-white' : 'text-black'} w-7 h-7 rounded-none text-sm font-black transition-all flex items-center justify-center`}
@@ -519,21 +554,26 @@ export const PlayerManager = ({ players, onAddPlayer, onUpdatePlayer, onRemovePl
                     const hasRating = playerData.rating && playerData.rating > 0;
                     
                     return (
-                      <div 
-                        key={idx} 
+                      <div
+                        key={idx}
                         className={`p-2 rounded-none text-sm font-bold uppercase ${
-                          exists 
-                            ? 'bg-yellow-600 text-black' 
+                          exists
+                            ? 'bg-yellow-600 text-black'
                             : 'bg-gray-800 text-white'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span>{exists ? '⚠️' : '✅'}</span>
-                          {hasRating && (
-                            <span className="text-xs bg-green-600 text-white px-1 rounded">
-                              {playerData.rating?.toFixed(1)}
-                            </span>
-                          )}
+                          <div className="flex gap-1">
+                            {playerData.isKeyPlayer && (
+                              <span className="text-xs bg-yellow-500 text-black px-1 rounded font-black">⭐</span>
+                            )}
+                            {hasRating && (
+                              <span className="text-xs bg-green-600 text-white px-1 rounded">
+                                {playerData.rating?.toFixed(1)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="text-xs mt-1">{playerData.name}</div>
                       </div>
