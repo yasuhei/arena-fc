@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getSessionId } from '../utils/sessionId';
+
+export type PlayerPosition = 'ZAG' | 'MEI' | 'ATA';
 
 export interface Player {
     id: string;
     name: string;
-    rating: number; // 0 a 5
+    rating: number;
+    habilidade: number;
+    posicao: PlayerPosition;
     isKeyPlayer: boolean;
 }
 
-// Chaves para localStorage
 const STORAGE_KEYS = {
     PLAYERS: 'sempanelafc_players'
 };
@@ -16,95 +19,133 @@ const STORAGE_KEYS = {
 export const usePlayers = () => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
-    const [sessionId] = useState(() => getSessionId()); // ID único por navegador
+    const [sessionId] = useState(() => getSessionId());
 
-    // Salvar no localStorage
     const saveToLocalStorage = (playersData: Player[]) => {
         try {
-            localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify({
-                sessionId,
-                players: playersData,
-                timestamp: Date.now()
-            }));
+            localStorage.setItem(
+                STORAGE_KEYS.PLAYERS,
+                JSON.stringify({
+                    sessionId,
+                    players: playersData,
+                    timestamp: Date.now()
+                })
+            );
         } catch (err) {
             console.error('Erro ao salvar no localStorage:', err);
         }
     };
 
-    // Carregar do localStorage
     const loadFromLocalStorage = (): Player[] => {
         try {
             const stored = localStorage.getItem(STORAGE_KEYS.PLAYERS);
+
             if (stored) {
                 const data = JSON.parse(stored);
-                // Verificar se é da mesma sessão
+
                 if (data.sessionId === sessionId && data.players) {
                     return data.players.map((p: any) => ({
                         ...p,
-                        isKeyPlayer: p.isKeyPlayer ?? false
+
+                        // Compatibilidade com jogadores antigos
+                        isKeyPlayer: p.isKeyPlayer ?? false,
+                        habilidade: p.habilidade ?? p.rating ?? 0,
+                        posicao: p.posicao ?? 'MEI'
                     }));
                 }
             }
         } catch (err) {
-            console.error('Erro ao carregar do localStorage:', err);
+            console.error('Erro ao carregar no localStorage:', err);
         }
+
         return [];
     };
 
-    // Gerar ID único para novos jogadores
     const generateId = () => {
-        return `player_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+        return `player_${Date.now()}_${Math.random()
+            .toString(36)
+            .substring(2, 11)}`;
     };
 
-    // Carregar jogadores do localStorage
     const loadPlayers = () => {
         setLoading(true);
+
         const localPlayers = loadFromLocalStorage();
+
         setPlayers(localPlayers);
+
         setLoading(false);
     };
 
-    // Adicionar novo jogador
-    const addPlayer = async (name: string, rating: number, isKeyPlayer: boolean = false) => {
+    const addPlayer = async (
+        name: string,
+        rating: number,
+        habilidade: number,
+        posicao: PlayerPosition,
+        isKeyPlayer: boolean = false
+    ) => {
+
         const newPlayer: Player = {
             id: generateId(),
             name,
             rating,
+            habilidade,
+            posicao,
             isKeyPlayer
         };
 
         setPlayers(prev => {
             const updated = [...prev, newPlayer];
+
             saveToLocalStorage(updated);
+
             return updated;
         });
 
         return newPlayer;
     };
 
-    // Atualizar jogador
-    const updatePlayer = async (id: string, name: string, rating: number, isKeyPlayer: boolean = false) => {
-        const updatedPlayer: Player = { id, name, rating, isKeyPlayer };
+    const updatePlayer = async (
+        id: string,
+        name: string,
+        rating: number,
+        habilidade: number,
+        posicao: PlayerPosition,
+        isKeyPlayer: boolean = false
+    ) => {
+
+        const updatedPlayer: Player = {
+            id,
+            name,
+            rating,
+            habilidade,
+            posicao,
+            isKeyPlayer
+        };
 
         setPlayers(prev => {
-            const updated = prev.map(p => p.id === id ? updatedPlayer : p);
+            const updated = prev.map(p =>
+                p.id === id ? updatedPlayer : p
+            );
+
             saveToLocalStorage(updated);
+
             return updated;
         });
 
         return updatedPlayer;
     };
 
-    // Remover jogador
     const removePlayer = async (id: string) => {
         setPlayers(prev => {
             const updated = prev.filter(p => p.id !== id);
+
             saveToLocalStorage(updated);
+
             return updated;
         });
     };
 
-    // Carregar dados na inicialização
     useEffect(() => {
         loadPlayers();
     }, [sessionId]);
@@ -112,13 +153,13 @@ export const usePlayers = () => {
     return {
         players,
         loading,
-        error: null, // Sem erros de conexão
-        isOffline: false, // Sempre "online" (localStorage)
+        error: null,
+        isOffline: false,
         addPlayer,
         updatePlayer,
         removePlayer,
         refetch: loadPlayers,
-        syncWithBackend: () => { }, // Função vazia para compatibilidade
+        syncWithBackend: () => { },
         sessionId
     };
 };
