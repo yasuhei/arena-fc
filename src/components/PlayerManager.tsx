@@ -786,7 +786,7 @@ export const PlayerManager = ({
             <div className="w-full xl:w-auto">
 
               <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
-                Habilidade (1-5)
+                Habil.
               </label>
 
               <select
