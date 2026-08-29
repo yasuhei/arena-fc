@@ -1,4 +1,3 @@
-
 import { Player } from '../hooks/usePlayers';
 
 type Position = 'ZAG' | 'MEI' | 'ATA';
@@ -8,6 +7,8 @@ interface TeamStats {
     habilidade: number;
     positions: Record<Position, number>;
 }
+
+type PlayerTeamHistory = Map<string, Set<number>>;
 
 /**
  * Retorna a posição do jogador.
@@ -145,7 +146,7 @@ function calculateGlobalBalance(
  * Miguel + Allan
  *
  * sempre vira:
- * allan|miguel
+ * id-menor|id-maior
  */
 function getPairKey(
     playerA: Player,
@@ -181,9 +182,14 @@ function getPairCount(
  * Calcula a penalização de repetição
  * de jogadores dentro de um time.
  *
- * Quanto mais pessoas daquele time já
- * jogaram juntas anteriormente,
- * maior a penalização.
+ * Regra:
+ *
+ * 0x = nenhuma penalização
+ * 1x = penalização alta
+ * 2x+ = penalização extremamente alta
+ *
+ * Isso força o algoritmo a procurar
+ * companheiros diferentes nas próximas opções.
  */
 function calculateRepetitionPenalty(
     team: Player[],
@@ -212,15 +218,22 @@ function calculateRepetitionPenalty(
                 );
 
             /*
-             * 1 repetição = penalização alta
-             * 2 repetições = penalização ainda maior
+             * A dupla já apareceu uma vez.
+             *
+             * Ainda permitimos, caso seja necessário
+             * para manter o equilíbrio.
              */
             if (repetitions === 1) {
-                penalty += 100;
+                penalty += 1000;
             }
 
+            /*
+             * A dupla já apareceu duas ou mais vezes.
+             *
+             * Tentamos impedir fortemente.
+             */
             if (repetitions >= 2) {
-                penalty += 300;
+                penalty += 10000;
             }
         }
     }
@@ -251,10 +264,11 @@ function registerTeamsInHistory(
                 j++
             ) {
 
-                const key = getPairKey(
-                    team[i],
-                    team[j]
-                );
+                const key =
+                    getPairKey(
+                        team[i],
+                        team[j]
+                    );
 
                 pairHistory.set(
                     key,
@@ -266,13 +280,153 @@ function registerTeamsInHistory(
 }
 
 /**
- * Verifica se o time possui posições razoavelmente equilibradas.
+ * Registra em quais números de time
+ * cada jogador já apareceu.
+ *
+ * Exemplo:
+ *
+ * Miguel -> Set(0, 1)
+ *
+ * Significa que Miguel já esteve
+ * no Time 1 e no Time 2.
+ */
+function registerPlayerTeamHistory(
+    teams: Player[][],
+    playerTeamHistory: PlayerTeamHistory
+): void {
+
+    for (
+        let teamIndex = 0;
+        teamIndex < teams.length;
+        teamIndex++
+    ) {
+
+        for (const player of teams[teamIndex]) {
+
+            if (!playerTeamHistory.has(player.id)) {
+
+                playerTeamHistory.set(
+                    player.id,
+                    new Set<number>()
+                );
+            }
+
+            playerTeamHistory
+                .get(player.id)!
+                .add(teamIndex);
+        }
+    }
+}
+
+/**
+ * Penaliza colocar um jogador novamente
+ * no mesmo número de time que ele já ocupou.
+ *
+ * Exemplo:
+ *
+ * Opção 1 -> Time 1
+ * Opção 2 -> Time 1
+ *
+ * recebe penalização.
+ */
+function calculateMovementPenalty(
+    team: Player[],
+    teamIndex: number,
+    playerTeamHistory: PlayerTeamHistory
+): number {
+
+    let penalty = 0;
+
+    for (const player of team) {
+
+        const history =
+            playerTeamHistory.get(player.id);
+
+        if (
+            !history ||
+            history.size === 0
+        ) {
+            continue;
+        }
+
+        /*
+         * O jogador já esteve nesse mesmo
+         * número de time em uma opção anterior.
+         */
+        if (history.has(teamIndex)) {
+            penalty += 500;
+        }
+    }
+
+    return penalty;
+}
+
+/**
+ * Penaliza jogadores que ainda não
+ * mudaram de número de time.
+ *
+ * Exemplo:
+ *
+ * Opção 1 -> Time 1
+ * Opção 2 -> Time 1
+ * Opção 3 -> Time 1
+ *
+ * Esse jogador recebe penalização forte.
+ */
+function calculateNoMovementPenalty(
+    teams: Player[][],
+    playerTeamHistory: PlayerTeamHistory
+): number {
+
+    let penalty = 0;
+
+    for (
+        let teamIndex = 0;
+        teamIndex < teams.length;
+        teamIndex++
+    ) {
+
+        for (const player of teams[teamIndex]) {
+
+            const history =
+                playerTeamHistory.get(player.id);
+
+            if (
+                !history ||
+                history.size === 0
+            ) {
+                continue;
+            }
+
+            /*
+             * O jogador apareceu somente em
+             * um número de time anteriormente.
+             *
+             * Se continua nesse mesmo time,
+             * significa que ainda não circulou.
+             */
+            if (
+                history.size === 1 &&
+                history.has(teamIndex)
+            ) {
+                penalty += 2000;
+            }
+        }
+    }
+
+    return penalty;
+}
+
+/**
+ * Verifica se o time possui posições
+ * razoavelmente equilibradas.
  */
 function calculatePositionPenalty(
     team: Player[]
 ): number {
 
-    const stats = getTeamStats(team);
+    const stats =
+        getTeamStats(team);
 
     const counts = [
         stats.positions.ZAG,
@@ -280,8 +434,11 @@ function calculatePositionPenalty(
         stats.positions.ATA
     ];
 
-    const max = Math.max(...counts);
-    const min = Math.min(...counts);
+    const max =
+        Math.max(...counts);
+
+    const min =
+        Math.min(...counts);
 
     /*
      * Quanto maior a diferença entre posições,
@@ -295,12 +452,16 @@ function calculatePositionPenalty(
  *
  * O pairHistory informa quais jogadores
  * já jogaram juntos nas opções anteriores.
+ *
+ * O playerTeamHistory informa em quais
+ * números de time cada jogador já apareceu.
  */
 function generateOption(
     players: Player[],
     numTeams: number,
     teamSize: number,
-    pairHistory: Map<string, number>
+    pairHistory: Map<string, number>,
+    playerTeamHistory: PlayerTeamHistory
 ): Player[][] {
 
     const teams: Player[][] =
@@ -315,22 +476,23 @@ function generateOption(
      * Adicionamos uma pequena variação aleatória
      * para que as opções não sejam idênticas.
      */
-    const sortedPlayers = [...players].sort(
-        (a, b) => {
+    const sortedPlayers =
+        [...players].sort(
+            (a, b) => {
 
-            const strengthA =
-                getPlayerStrength(a);
+                const strengthA =
+                    getPlayerStrength(a);
 
-            const strengthB =
-                getPlayerStrength(b);
+                const strengthB =
+                    getPlayerStrength(b);
 
-            return (
-                strengthB -
-                strengthA +
-                (Math.random() - 0.5) * 0.15
-            );
-        }
-    );
+                return (
+                    strengthB -
+                    strengthA +
+                    (Math.random() - 0.5) * 0.15
+                );
+            }
+        );
 
     /**
      * Distribuição jogador por jogador.
@@ -346,9 +508,12 @@ function generateOption(
             teamIndex++
         ) {
 
-            const team = teams[teamIndex];
+            const team =
+                teams[teamIndex];
 
-            if (team.length >= teamSize) {
+            if (
+                team.length >= teamSize
+            ) {
                 continue;
             }
 
@@ -363,6 +528,9 @@ function generateOption(
 
             /*
              * Força atual do time.
+             *
+             * Mantido para preservar
+             * o comportamento atual.
              */
             const stats =
                 getTeamStats(
@@ -374,7 +542,7 @@ function generateOption(
                 stats.habilidade * 4;
 
             /*
-             * Repetição de jogadores.
+             * Penalização de duplas repetidas.
              */
             const repetitionPenalty =
                 calculateRepetitionPenalty(
@@ -391,6 +559,18 @@ function generateOption(
                 );
 
             /*
+             * Penalização para manter
+             * jogadores no mesmo número
+             * de time.
+             */
+            const movementPenalty =
+                calculateMovementPenalty(
+                    simulatedTeam,
+                    teamIndex,
+                    playerTeamHistory
+                );
+
+            /*
              * Pequena penalização para quantidade
              * de jogadores.
              */
@@ -401,6 +581,7 @@ function generateOption(
                 strength +
                 repetitionPenalty +
                 positionPenalty +
+                movementPenalty +
                 sizePenalty;
 
             /*
@@ -411,7 +592,8 @@ function generateOption(
                 Math.random() * 8;
 
             const finalScore =
-                score + randomFactor;
+                score +
+                randomFactor;
 
             if (
                 finalScore <
@@ -426,7 +608,9 @@ function generateOption(
             }
         }
 
-        if (bestTeamIndex !== -1) {
+        if (
+            bestTeamIndex !== -1
+        ) {
 
             teams[bestTeamIndex].push(
                 player
@@ -441,11 +625,8 @@ function generateOption(
  * Melhora os times através de trocas.
  *
  * O algoritmo tenta trocar jogadores de times
- * diferentes e só mantém a troca quando:
- *
- * 1. melhora o equilíbrio;
- * 2. reduz repetições;
- * 3. mantém posições razoáveis.
+ * diferentes e só mantém a troca quando
+ * melhora o score completo.
  */
 function improveTeams(
     teams: Player[][],
@@ -476,7 +657,8 @@ function improveTeams(
         ) {
 
             for (
-                let teamBIndex = teamAIndex + 1;
+                let teamBIndex =
+                    teamAIndex + 1;
                 teamBIndex < teams.length;
                 teamBIndex++
             ) {
@@ -594,8 +776,10 @@ function calculateCompleteScore(
  *
  * IMPORTANTE:
  *
- * Essa é a função que você deve usar
- * para gerar as 3 opções.
+ * As opções são geradas sequencialmente.
+ *
+ * O histórico de duplas e o histórico
+ * de movimentação são atualizados a cada opção.
  */
 export function createMultipleBalancedTeams(
     selected: Set<string>,
@@ -654,7 +838,7 @@ export function createMultipleBalancedTeams(
             Math.ceil(total / 2);
     }
 
-    /*
+    /**
      * Histórico de duplas.
      *
      * Ex:
@@ -667,6 +851,21 @@ export function createMultipleBalancedTeams(
     const pairHistory =
         new Map<string, number>();
 
+    /**
+     * Histórico de números de time
+     * de cada jogador.
+     *
+     * Ex:
+     *
+     * Miguel -> Set(0, 1)
+     *
+     * significa que Miguel já esteve
+     * no Time 1 e no Time 2.
+     */
+    const playerTeamHistory:
+        PlayerTeamHistory =
+        new Map<string, Set<number>>();
+
     const options: Player[][][] = [];
 
     for (
@@ -675,22 +874,24 @@ export function createMultipleBalancedTeams(
         optionIndex++
     ) {
 
-        let bestOption: Player[][] | null =
-            null;
+        let bestOption:
+            Player[][] | null = null;
 
-        let bestScore = Infinity;
+        let bestScore =
+            Infinity;
 
         /*
-         * Geramos várias possibilidades e
-         * pegamos a melhor.
+         * Geramos várias possibilidades
+         * e pegamos a melhor.
          *
-         * Isso evita depender de uma única
-         * distribuição aleatória.
+         * A partir da segunda opção aumentamos
+         * a quantidade de tentativas para encontrar
+         * combinações mais diferentes.
          */
         const attempts =
             optionIndex === 0
                 ? 150
-                : 300;
+                : 500;
 
         for (
             let attempt = 0;
@@ -703,7 +904,8 @@ export function createMultipleBalancedTeams(
                     available,
                     numTeams,
                     teamSize,
-                    pairHistory
+                    pairHistory,
+                    playerTeamHistory
                 );
 
             /*
@@ -721,18 +923,40 @@ export function createMultipleBalancedTeams(
                 continue;
             }
 
-            const score =
+            /*
+             * Score de equilíbrio.
+             */
+            const balanceScore =
                 calculateCompleteScore(
                     candidate,
                     pairHistory
                 );
 
+            /*
+             * Score de movimentação.
+             *
+             * Penaliza jogadores que ainda
+             * não mudaram de time.
+             */
+            const movementScore =
+                calculateNoMovementPenalty(
+                    candidate,
+                    playerTeamHistory
+                );
+
+            const score =
+                balanceScore +
+                movementScore;
+
             if (
                 score < bestScore
             ) {
 
-                bestScore = score;
-                bestOption = candidate;
+                bestScore =
+                    score;
+
+                bestOption =
+                    candidate;
             }
         }
 
@@ -747,7 +971,8 @@ export function createMultipleBalancedTeams(
                     available,
                     numTeams,
                     teamSize,
-                    pairHistory
+                    pairHistory,
+                    playerTeamHistory
                 );
         }
 
@@ -761,8 +986,7 @@ export function createMultipleBalancedTeams(
         /*
          * MUITO IMPORTANTE:
          *
-         * Agora registramos as duplas
-         * dessa opção.
+         * Registra as duplas dessa opção.
          *
          * A próxima opção saberá que
          * essas pessoas já jogaram juntas.
@@ -770,6 +994,15 @@ export function createMultipleBalancedTeams(
         registerTeamsInHistory(
             bestOption,
             pairHistory
+        );
+
+        /*
+         * Registra em qual número de time
+         * cada jogador apareceu.
+         */
+        registerPlayerTeamHistory(
+            bestOption,
+            playerTeamHistory
         );
     }
 
@@ -799,4 +1032,3 @@ export function createBalancedTeams(
 
     return options[0] ?? [];
 }
-
