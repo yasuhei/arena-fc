@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { usePlayers, Player } from './hooks/usePlayers';
+import { useEffect, useState } from 'react';
 import { PlayerManager } from './components/PlayerManager';
-import { shareTeamsOnWhatsApp as shareTeamsUtil, shareAllTeamOptionsOnWhatsApp } from './utils/whatsappShare';
+import { Player, usePlayers } from './hooks/usePlayers';
+import { createMultipleBalancedTeams } from './utils/teamBalancer';
+import { shareAllTeamOptionsOnWhatsApp, shareTeamsOnWhatsApp as shareTeamsUtil } from './utils/whatsappShare';
 
 // Função para renderizar rating com barra de progresso compacta
 const renderRatingBarCompact = (rating: number) => {
@@ -17,7 +18,7 @@ const renderRatingBarCompact = (rating: number) => {
   }
 
   const percentage = (rating / 5) * 100;
-  
+
   const getColor = (rating: number) => {
     if (rating >= 0.1 && rating <= 0.9) return 'bg-red-500';
     if (rating >= 1.0 && rating <= 1.9) return 'bg-orange-500';
@@ -30,7 +31,7 @@ const renderRatingBarCompact = (rating: number) => {
   return (
     <div className="flex items-center space-x-1">
       <div className="w-16 h-2 bg-gray-700 rounded-sm border border-gray-600 overflow-hidden">
-        <div 
+        <div
           className={`h-full ${getColor(rating)} rounded-sm transition-all duration-500 ease-out`}
           style={{ width: `${percentage}%` }}
         ></div>
@@ -40,141 +41,27 @@ const renderRatingBarCompact = (rating: number) => {
   );
 };
 
-function distributeKeyPlayers(teams: Player[][], keyPlayers: Player[]): Player[][] {
-  const result = teams.map(team => [...team]);
-  const sorted = [...keyPlayers].sort((a, b) => b.rating - a.rating);
-
-  for (const kp of sorted) {
-    const teamsWithoutKey = result
-      .map((team, idx) => ({ team, idx }))
-      .filter(({ team }) => !team.some(p => p.isKeyPlayer ?? false));
-
-    const candidates = teamsWithoutKey.length > 0
-      ? teamsWithoutKey
-      : result.map((team, idx) => ({ team, idx }));
-
-    const best = candidates.reduce((best, curr) => {
-      if (curr.team.length !== best.team.length) {
-        return curr.team.length < best.team.length ? curr : best;
-      }
-      const bestTotal = best.team.reduce((s, p) => s + p.rating, 0);
-      const currTotal = curr.team.reduce((s, p) => s + p.rating, 0);
-      return currTotal < bestTotal ? curr : best;
-    });
-
-    result[best.idx].push(kp);
-  }
-
-  return result;
-}
-
-function createBalancedTeams(selected: Set<string>, players: Player[], variation: number = 0): Player[][] {
-  const available = players.filter(p => selected.has(p.id));
-  const total = available.length;
-  if (total < 6) return [];
-
-  let numTeams = 2;
-
-  // Lógica otimizada para futebol society (6 jogadores por time)
-  if (total >= 6 && total <= 12) {
-    numTeams = 2;
-  } else if (total >= 13 && total <= 21) {
-    numTeams = 3;
-  } else if (total >= 22 && total <= 32) {
-    numTeams = 4;
-  } else if (total > 32) {
-    numTeams = Math.ceil(total / 6);
-  }
-
-  const teams: Player[][] = Array.from({ length: numTeams }, () => []);
-
-  const keyPlayers = available.filter(p => p.isKeyPlayer ?? false);
-  const regularPlayers = available.filter(p => !(p.isKeyPlayer ?? false));
-
-  // Função para embaralhar array
-  const shuffleArray = (array: Player[]) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
-
-  let sortedPlayers: Player[];
-  
-  if (variation === 0) {
-    // OPTION 1: Rating Priority - Balanceamento por menor número de jogadores primeiro, depois menor soma
-    sortedPlayers = [...regularPlayers].sort((a, b) => b.rating - a.rating);
-    
-    // Distribuir usando algoritmo balanceado
-    for (const player of sortedPlayers) {
-      // Encontrar o time com menor número de jogadores primeiro
-      const teamSizes = teams.map(team => team.length);
-      const minSize = Math.min(...teamSizes);
-      
-      // Entre os times com menor número de jogadores, escolher o de menor soma de ratings
-      const candidateTeams = teams
-        .map((team, index) => ({ team, index, size: team.length, sum: team.reduce((sum, p) => sum + p.rating, 0) }))
-        .filter(t => t.size === minSize)
-        .sort((a, b) => a.sum - b.sum);
-      
-      const selectedTeamIndex = candidateTeams[0].index;
-      teams[selectedTeamIndex].push(player);
-    }
-    
-  } else if (variation === 1) {
-    // OPTION 2: Mixed Shuffle - Embaralhar por níveis
-    const highRated = regularPlayers.filter(p => p.rating >= 3.5);
-    const midRated = regularPlayers.filter(p => p.rating >= 2.0 && p.rating < 3.5);
-    const lowRated = regularPlayers.filter(p => p.rating < 2.0);
-    
-    // Embaralhar cada grupo separadamente
-    const shuffledHigh = shuffleArray(highRated);
-    const shuffledMid = shuffleArray(midRated);
-    const shuffledLow = shuffleArray(lowRated);
-    
-    // Combinar os grupos embaralhados
-    sortedPlayers = [...shuffledHigh, ...shuffledMid, ...shuffledLow];
-    
-    // Distribuir round-robin
-    let currentTeamIndex = 0;
-    for (const player of sortedPlayers) {
-      teams[currentTeamIndex].push(player);
-      currentTeamIndex = (currentTeamIndex + 1) % numTeams;
-    }
-    
-  } else {
-    // OPTION 3: Serpentine Draft - Padrão serpentina (melhorado)
-    sortedPlayers = [...regularPlayers].sort((a, b) => b.rating - a.rating);
-    
-    let currentTeam = 0;
-    let direction = 1; // 1 para frente, -1 para trás
-    
-    for (const player of sortedPlayers) {
-      teams[currentTeam].push(player);
-      
-      // Mover para próximo time
-      if (direction === 1) {
-        currentTeam++;
-        if (currentTeam >= numTeams) {
-          currentTeam = numTeams - 1;
-          direction = -1;
-        }
-      } else {
-        currentTeam--;
-        if (currentTeam < 0) {
-          currentTeam = 0;
-          direction = 1;
-        }
-      }
-    }
-  }
-
-  return distributeKeyPlayers(teams, keyPlayers)
-    .filter(team => team.length > 0)
-    .map(team => shuffleArray(team));
-}
+/**
+ * ============================================================
+ * ATENÇÃO
+ * ============================================================
+ *
+ * A geração de times NÃO é mais feita aqui.
+ *
+ * Antes existia uma função local `createBalancedTeams`
+ * (com as variações "Rating Priority", "Mixed Shuffle" e
+ * "Serpentine Draft") que era chamada 3 vezes seguidas,
+ * uma para cada opção, SEM NENHUM HISTÓRICO entre elas.
+ *
+ * Isso é o que permitia que a Opção 1 e a Opção 3, por
+ * exemplo, tivessem 4 ou 5 jogadores exatamente iguais no
+ * mesmo time — não existia nenhuma regra impedindo isso.
+ *
+ * Agora usamos `createMultipleBalancedTeams`, de
+ * `./utils/createBalancedTeams`, que gera as 3 opções de
+ * uma vez só, compartilhando o histórico de duplas e de
+ * times entre elas e validando rigidamente cada uma.
+ */
 
 function App() {
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers();
@@ -187,7 +74,7 @@ function App() {
   const [manualTeams, setManualTeams] = useState<Player[][]>([[], []]); // Times manuais
   const [creationMode, setCreationMode] = useState<'auto' | 'manual'>('auto'); // Modo de criação
   const [confirmedTeams, setConfirmedTeams] = useState<Player[][] | null>(null); // Times confirmados
-  
+
   // Estados do timer
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -203,11 +90,18 @@ function App() {
 
   const createTeams = () => {
     if (creationMode === 'auto') {
-      const examples: Player[][][] = [];
-      for (let i = 0; i < 3; i++) {
-        const teamExample = createBalancedTeams(selected, players, i);
-        examples.push(teamExample);
-      }
+      /**
+       * Gera as 3 opções de UMA VEZ, com histórico
+       * compartilhado entre elas (duplas, grupos
+       * repetidos, jogador parado no mesmo time, etc).
+       *
+       * Pode retornar MENOS de 3 opções se não for
+       * possível respeitar todas as regras — isso é
+       * intencional, é melhor mostrar 1 ou 2 opções
+       * válidas do que 3 opções quebrando as regras.
+       */
+      const examples = createMultipleBalancedTeams(selected, players, 3);
+
       setTeams(examples);
       setSelectedExample(null);
       setCustomGames({});
@@ -415,7 +309,7 @@ function App() {
   const updateCustomGame = (exampleIdx: number, gameIdx: number, field: string, value: number) => {
     setCustomGames(prev => ({
       ...prev,
-      [exampleIdx]: prev[exampleIdx].map((game, idx) => 
+      [exampleIdx]: prev[exampleIdx].map((game, idx) =>
         idx === gameIdx ? { ...game, [field]: value } : game
       )
     }));
@@ -424,7 +318,7 @@ function App() {
   const confirmGame = (exampleIdx: number, gameIdx: number) => {
     setCustomGames(prev => ({
       ...prev,
-      [exampleIdx]: prev[exampleIdx].map((game, idx) => 
+      [exampleIdx]: prev[exampleIdx].map((game, idx) =>
         idx === gameIdx ? { ...game, confirmed: true } : game
       )
     }));
@@ -432,9 +326,9 @@ function App() {
 
   const shareTeamsOnWhatsApp = () => {
     console.log('🔍 Iniciando compartilhamento WhatsApp...');
-    
+
     let teamsToShare: Player[][] = [];
-    
+
     if (creationMode === 'auto' && selectedExample !== null) {
       teamsToShare = teams[selectedExample];
       console.log('📊 Modo automático - Opção selecionada:', selectedExample);
@@ -442,14 +336,14 @@ function App() {
       teamsToShare = manualTeams;
       console.log('📊 Modo manual');
     }
-    
+
     console.log('👥 Times para compartilhar:', teamsToShare);
-    
+
     if (teamsToShare.length === 0) {
       alert('❌ Nenhum time encontrado para compartilhar!');
       return;
     }
-    
+
     // Usar a função utilitária importada
     try {
       shareTeamsUtil(teamsToShare);
@@ -461,19 +355,19 @@ function App() {
   };
 
   const shareAllOptionsOnWhatsApp = () => {
-    
+
     if (creationMode !== 'auto') {
       console.error('❌ Modo não é automático:', creationMode);
       alert('❌ Esta função só está disponível no modo automático!');
       return;
     }
-    
+
     if (teams.length === 0) {
       console.error('❌ Nenhum time gerado');
       alert('❌ Você precisa gerar os times primeiro!');
       return;
     }
-    
+
     // Verificar se todas as opções têm times válidos
     const validTeams = teams.filter(option => option && option.length > 0);
     if (validTeams.length === 0) {
@@ -481,15 +375,15 @@ function App() {
       alert('❌ Nenhuma opção de time válida encontrada!');
       return;
     }
-    
+
     console.log('✅ Dados válidos, iniciando compartilhamento...');
-    
+
     try {
       shareAllTeamOptionsOnWhatsApp(teams);
       console.log('✅ Todas as opções compartilhadas no WhatsApp!');
     } catch (error) {
       console.error('❌ Erro ao compartilhar opções:', error);
-      
+
       // Mensagem de erro mais específica
       let errorMessage = 'Erro ao compartilhar opções. ';
       if (error instanceof Error) {
@@ -503,7 +397,7 @@ function App() {
       } else {
         errorMessage += 'Verifique se o navegador permite pop-ups.';
       }
-      
+
       alert(errorMessage);
     }
   };
@@ -519,7 +413,7 @@ function App() {
 
 
   return (
-    <div 
+    <div
       className="min-h-screen relative bg-black"
       style={{
         fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif"
@@ -527,9 +421,9 @@ function App() {
     >
       {/* Background com gradiente sutil */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 opacity-95"></div>
-      
+
       {/* Padrão geométrico sutil */}
-      <div 
+      <div
         className="absolute inset-0 opacity-5"
         style={{
           backgroundImage: `repeating-linear-gradient(
@@ -541,7 +435,7 @@ function App() {
           )`
         }}
       ></div>
-      
+
       <header className="relative z-10 bg-black bg-opacity-80 backdrop-blur-md border-b border-gray-800">
         <div className="container mx-auto px-4 md:px-8 py-4 md:py-6">
           <div className="flex justify-between items-center">
@@ -563,7 +457,7 @@ function App() {
           </p>
         </div>
       </header>
-      
+
       <div className="container mx-auto p-3 md:p-6 max-w-7xl relative z-10">
         {/* Botão para alternar entre gerenciar e selecionar jogadores */}
         <div className="text-center mb-4 md:mb-6">
@@ -629,8 +523,8 @@ function App() {
                   </div>
                 ) : (
                   players.map(player => (
-                    <div 
-                      key={player.id} 
+                    <div
+                      key={player.id}
                       className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 hover:border-white rounded-none p-3 md:p-4 flex items-center space-x-3 hover:bg-gray-800 transition-all cursor-pointer group"
                       onClick={() => handleCheck(player.id, !selected.has(player.id))}
                     >
@@ -684,8 +578,8 @@ function App() {
                 </button>
               </div>
 
-              <button 
-                onClick={createTeams} 
+              <button
+                onClick={createTeams}
                 className="bg-white hover:bg-gray-100 text-black font-black py-4 px-10 md:py-5 md:px-16 rounded-none text-base md:text-lg shadow-2xl transform hover:scale-105 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={selected.size < 6}
                 style={{ letterSpacing: '0.15em' }}
@@ -701,8 +595,8 @@ function App() {
           <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-3 md:p-8 landscape:p-3 min-h-0">
             {/* Botão de navegação */}
             <div className="mb-3 md:mb-4 landscape:mb-2">
-              <button 
-                onClick={backToSelection} 
+              <button
+                onClick={backToSelection}
                 className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 md:px-6 md:py-3 landscape:px-4 landscape:py-2 rounded-none font-black text-sm md:text-base landscape:text-sm uppercase tracking-wider transition-all"
               >
                 ← BACK TO SELECTION
@@ -715,7 +609,7 @@ function App() {
                 <h2 className="text-2xl md:text-3xl font-black mb-8 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
                   ✋ MANUAL TEAM SETUP
                 </h2>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   {/* Jogadores disponíveis */}
                   <div className="bg-gray-900 border border-gray-700 rounded-none p-4">
@@ -753,7 +647,7 @@ function App() {
                     {manualTeams.map((team, teamIdx) => {
                       const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
                       const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
-                      
+
                       return (
                         <div key={teamIdx} className="bg-black border-2 border-gray-600 rounded-none p-4">
                           <div className="flex justify-between items-center mb-3">
@@ -813,10 +707,10 @@ function App() {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Botões Confirmar e Compartilhar - Manual Mode */}
                 <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-                  <button 
+                  <button
                     onClick={shareTeamsOnWhatsApp}
                     className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
                     style={{ letterSpacing: '0.15em' }}
@@ -824,7 +718,7 @@ function App() {
                     <span className="text-2xl">📱</span>
                     SHARE ON WHATSAPP
                   </button>
-                  <button 
+                  <button
                     onClick={confirmTeams}
                     className="bg-white hover:bg-gray-100 text-black px-10 py-4 md:px-16 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105"
                     style={{ letterSpacing: '0.15em' }}
@@ -834,25 +728,31 @@ function App() {
                 </div>
               </>
             ) : (
-              // VIEW DE TIMES AUTOMÁTICOS (código existente)
+              // VIEW DE TIMES AUTOMÁTICOS
               <>
                 <h2 className="text-xl md:text-3xl landscape:text-lg font-black mb-4 md:mb-8 landscape:mb-3 text-white text-center uppercase tracking-wider" style={{ letterSpacing: '0.1em' }}>
                   ⚡ BALANCED TEAMS ⚡
                 </h2>
+
+                {/* Aviso caso não tenha sido possível gerar as 3 opções respeitando as regras */}
+                {teams.length > 0 && teams.length < 3 && (
+                  <p className="text-center text-yellow-400 text-xs md:text-sm uppercase tracking-wide mb-4 md:mb-6">
+                    ⚠️ Só foi possível gerar {teams.length} {teams.length === 1 ? 'opção' : 'opções'} respeitando todas as regras de rotação com esse grupo de jogadores.
+                  </p>
+                )}
+
             {selectedExample === null ? (
               <div className="grid gap-4 md:gap-6">
                 {teams.map((example, idx) => (
                   <div key={idx} className="bg-gradient-to-br from-gray-900 to-black border-2 border-gray-700 hover:border-white rounded-none p-3 md:p-6 landscape:p-3 cursor-pointer hover:bg-gray-800 transition-all group" onClick={() => setSelectedExample(idx)}>
                     <h3 className="text-base md:text-xl landscape:text-sm font-black mb-3 md:mb-4 landscape:mb-2 text-center text-white uppercase tracking-wide">
-                      {idx === 0 && 'OPTION 1 • RATING PRIORITY'}
-                      {idx === 1 && 'OPTION 2 • MIXED SHUFFLE'}
-                      {idx === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
+                      OPTION {idx + 1}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 landscape:grid-cols-3 gap-2 md:gap-4 landscape:gap-2 justify-items-center">
                       {example.map((team, tIdx) => {
                         const teamRatingSum = team.reduce((sum, player) => sum + player.rating, 0);
                         const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
-                        
+
                         return (
                           <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 md:p-3 landscape:p-1 shadow-xl w-full max-w-28 md:max-w-36 landscape:max-w-24">
                             <h4 className="font-black text-xs mb-1 md:mb-2 landscape:mb-1 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
@@ -872,16 +772,16 @@ function App() {
                     <p className="text-center text-xs md:text-sm landscape:text-xs text-gray-400 mt-3 md:mt-4 landscape:mt-2 uppercase tracking-wide group-hover:text-white transition-colors">Click to view details and scores</p>
                   </div>
                 ))}
-                
-                {/* Botão para compartilhar todas as 3 opções */}
+
+                {/* Botão para compartilhar todas as opções */}
                 <div className="text-center mt-6">
-                  <button 
+                  <button
                     onClick={shareAllOptionsOnWhatsApp}
                     className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2 mx-auto"
                     style={{ letterSpacing: '0.15em' }}
                   >
                     <span className="text-2xl">📱</span>
-                    SHARE ALL 3 OPTIONS
+                    SHARE ALL {teams.length} OPTION{teams.length !== 1 ? 'S' : ''}
                   </button>
                   <p className="text-xs text-gray-400 mt-2 uppercase tracking-wide">
                     Let everyone vote for their favorite option!
@@ -890,8 +790,8 @@ function App() {
               </div>
             ) : (
               <div>
-                <button 
-                  onClick={() => setSelectedExample(null)} 
+                <button
+                  onClick={() => setSelectedExample(null)}
                   className="mb-6 bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-none font-bold uppercase tracking-wider transition-all"
                 >
                   ← BACK TO OPTIONS
@@ -902,15 +802,13 @@ function App() {
                   return (
                     <div>
                       <h3 className="text-xl font-black mb-6 text-center text-white bg-gray-900 py-3 rounded-none uppercase tracking-wide">
-                        {selectedExample === 0 && 'OPTION 1 • RATING PRIORITY'}
-                        {selectedExample === 1 && 'OPTION 2 • MIXED SHUFFLE'}
-                        {selectedExample === 2 && 'OPTION 3 • SERPENTINE DRAFT'}
+                        OPTION {selectedExample + 1}
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
                         {example.map((team: Player[], tIdx: number) => {
                           const teamRatingSum = team.reduce((sum: number, player: Player) => sum + player.rating, 0);
                           const teamAverage = team.length > 0 ? (teamRatingSum / team.length).toFixed(1) : '0.0';
-                          
+
                           return (
                             <div key={tIdx} className="bg-black border-2 border-gray-600 rounded-none p-2 md:p-3 shadow-2xl hover:border-white transition-all w-full">
                               <h4 className="font-black text-xs md:text-sm mb-2 text-center text-white bg-gray-800 py-1 uppercase tracking-wider">
@@ -952,18 +850,10 @@ function App() {
                           );
                         })}
                       </div>
-                      
+
                       {/* Botões Confirmar e Compartilhar */}
                       <div className="text-center mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-                        {/* <button 
-                          onClick={shareTeamsOnWhatsApp}
-                          className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 md:px-12 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105 flex items-center gap-2"
-                          style={{ letterSpacing: '0.15em' }}
-                        >
-                          <span className="text-2xl">📱</span>
-                          SHARE ON WHATSAPP
-                        </button> */}
-                        <button 
+                        <button
                           onClick={confirmTeams}
                           className="bg-white hover:bg-gray-100 text-black px-10 py-4 md:px-16 md:py-5 rounded-none font-black text-lg uppercase tracking-wider transition-all shadow-2xl transform hover:scale-105"
                           style={{ letterSpacing: '0.15em' }}
@@ -986,8 +876,8 @@ function App() {
           <div className="bg-black bg-opacity-60 backdrop-blur-lg border border-gray-800 rounded-none shadow-2xl p-4 md:p-8">
             {/* Header com botão voltar */}
             <div className="mb-6 flex justify-between items-center">
-              <button 
-                onClick={() => setView('teams')} 
+              <button
+                onClick={() => setView('teams')}
                 className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-none font-black uppercase tracking-wider transition-all"
               >
                 ← BACK TO TEAMS
@@ -1003,7 +893,7 @@ function App() {
               <h3 className="text-xl font-black text-white text-center uppercase tracking-wider mb-4">
                 ⏱️ TIMER
               </h3>
-              
+
               {/* Seletor de Tempo */}
               <div className="flex justify-center gap-3 mb-6">
                 <button
@@ -1077,8 +967,8 @@ function App() {
             <div className="bg-gray-900 rounded-none p-6 border border-gray-800">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">📊 MATCH SCORES</h4>
-                <button 
-                  onClick={() => addCustomGame(0)} 
+                <button
+                  onClick={() => addCustomGame(0)}
                   className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs md:text-sm font-bold uppercase tracking-wider transition-all"
                 >
                   + ADD MATCH
@@ -1086,13 +976,13 @@ function App() {
               </div>
               <div className="space-y-3">
                 {(customGames[0] || []).map((game, gameIdx) => {
-                  const result = game.score1 > game.score2 ? `TEAM ${game.team1 + 1} WINS` : 
-                                game.score1 < game.score2 ? `TEAM ${game.team2 + 1} WINS` : 
+                  const result = game.score1 > game.score2 ? `TEAM ${game.team1 + 1} WINS` :
+                                game.score1 < game.score2 ? `TEAM ${game.team2 + 1} WINS` :
                                 'DRAW';
                   return (
                     <div key={gameIdx} className="bg-black border border-gray-700 p-3 rounded-none">
                       <div className="flex items-center justify-center space-x-2 md:space-x-3 mb-3">
-                        <select 
+                        <select
                           className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
                           value={game.team1}
                           onChange={(e) => updateCustomGame(0, gameIdx, 'team1', parseInt(e.target.value))}
@@ -1119,7 +1009,7 @@ function App() {
                           onChange={(e) => updateCustomGame(0, gameIdx, 'score2', parseInt(e.target.value) || 0)}
                           disabled={game.confirmed}
                         />
-                        <select 
+                        <select
                           className="border border-gray-600 bg-gray-900 text-white rounded-none px-2 py-2 text-xs md:text-sm font-bold uppercase"
                           value={game.team2}
                           onChange={(e) => updateCustomGame(0, gameIdx, 'team2', parseInt(e.target.value))}
@@ -1130,10 +1020,10 @@ function App() {
                           ))}
                         </select>
                       </div>
-                      
+
                       {!game.confirmed ? (
                         <div className="flex justify-center">
-                          <button 
+                          <button
                             onClick={() => confirmGame(0, gameIdx)}
                             className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-none text-xs font-black uppercase tracking-wider transition-all"
                           >
@@ -1173,40 +1063,40 @@ function App() {
         {/* Rodapé com links importantes */}
         <footer className="text-center text-gray-400 text-xs py-4 md:py-6 border-t border-gray-800 bg-black bg-opacity-80 backdrop-blur-md relative">
           <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-6 space-y-2 sm:space-y-0 mb-3 uppercase tracking-wider">
-            <a 
-              href="/landing-sem-panela-fc.html" 
+            <a
+              href="/landing-sem-panela-fc.html"
               target="_blank"
               className="hover:text-white transition-colors font-bold text-yellow-400"
             >
               🚀 Sem Panela FC
             </a>
             <span className="hidden sm:inline text-gray-700">|</span>
-            <a 
-              href="/sobre.html" 
+            <a
+              href="/sobre.html"
               target="_blank"
               className="hover:text-white transition-colors font-medium"
             >
               About
             </a>
             <span className="hidden sm:inline text-gray-700">|</span>
-            <a 
-              href="/como-usar.html" 
+            <a
+              href="/como-usar.html"
               target="_blank"
               className="hover:text-white transition-colors font-medium"
             >
               How to Use
             </a>
             <span className="hidden sm:inline text-gray-700">|</span>
-            <a 
-              href="/faq-sem-panela-fc.html" 
+            <a
+              href="/faq-sem-panela-fc.html"
               target="_blank"
               className="hover:text-white transition-colors font-medium"
             >
               FAQ
             </a>
             <span className="hidden sm:inline text-gray-700">|</span>
-            <a 
-              href="/privacy-policy.html" 
+            <a
+              href="/privacy-policy.html"
               target="_blank"
               className="hover:text-white transition-colors font-medium"
             >
@@ -1218,26 +1108,26 @@ function App() {
             <span className="hidden sm:inline">•</span>
             <span className="uppercase tracking-wide">Desenvolvido por Yasuhei Cristiano Nakamura</span>
           </div>
-          
+
           {/* Developer Credit */}
           <div className="mt-2 text-gray-500 text-xs">
             <span className="uppercase tracking-wide">
               Desenvolvedor Full Stack • React + TypeScript • Algoritmos avançados de balanceamento
             </span>
           </div>
-          
+
           {/* SEO Content - Hidden but crawlable */}
           <div className="sr-only">
             <h2>Sem Panela FC - Sistema para Montar Times de Futebol</h2>
             <p>
-              O Sem Panela FC é o melhor sistema para organizar peladas e montar times de futebol balanceados. 
+              O Sem Panela FC é o melhor sistema para organizar peladas e montar times de futebol balanceados.
               Nossa plataforma elimina as panelinhas e garante que todos tenham oportunidade igual de jogar em times equilibrados.
-              Com algoritmos inteligentes, importação de listas do WhatsApp e sistema de avaliação preciso, 
+              Com algoritmos inteligentes, importação de listas do WhatsApp e sistema de avaliação preciso,
               o Sem Panela FC revoluciona a forma como você organiza suas peladas.
             </p>
             <h3>Funcionalidades do Sem Panela FC</h3>
             <ul>
-              <li>Montador de times inteligente com 3 estratégias diferentes</li>
+              <li>Montador de times inteligente com regras rígidas de rotação</li>
               <li>Sistema de avaliação de jogadores de 0.0 a 5.0</li>
               <li>Importação automática de listas do WhatsApp</li>
               <li>Timer integrado com apito automático</li>

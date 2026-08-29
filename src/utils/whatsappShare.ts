@@ -106,6 +106,20 @@ function showManualCopyDialog(message: string) {
     console.log('📋 Dialog de cópia manual exibido');
 }
 
+/**
+ * Monta o cabeçalho "X OPCOES DE TIMES" dinamicamente,
+ * de acordo com quantas opções foram realmente geradas.
+ *
+ * Antes esse texto estava fixo em "3 OPCOES DE TIMES",
+ * então se o algoritmo só conseguisse gerar 2 opções
+ * válidas (respeitando as regras de rotação), a mensagem
+ * continuava dizendo "3" mesmo mostrando só 2 no corpo.
+ */
+function buildHeader(optionsCount: number): string {
+    const label = optionsCount === 1 ? 'OPCAO' : 'OPCOES';
+    return `SEM PANELA FC\n\n${optionsCount} ${label} DE TIMES\n\n`;
+}
+
 export function shareAllTeamOptionsOnWhatsApp(allTeamOptions: Player[][][]) {
     console.log('🔍 shareAllTeamOptionsOnWhatsApp chamada com:', allTeamOptions);
 
@@ -113,6 +127,16 @@ export function shareAllTeamOptionsOnWhatsApp(allTeamOptions: Player[][][]) {
     if (!allTeamOptions || allTeamOptions.length === 0) {
         console.error('❌ Dados de times inválidos:', allTeamOptions);
         throw new Error('Dados de times inválidos');
+    }
+
+    // Filtra apenas opções realmente preenchidas
+    const validOptions = allTeamOptions.filter(
+        option => option && option.length > 0
+    );
+
+    if (validOptions.length === 0) {
+        console.error('❌ Nenhuma opção de time válida');
+        throw new Error('Nenhuma opção de time válida encontrada');
     }
 
     try {
@@ -125,11 +149,9 @@ export function shareAllTeamOptionsOnWhatsApp(allTeamOptions: Player[][][]) {
         console.log('📱 É móvel:', isMobile, '| É iOS:', isIOS);
 
         // VERSÃO COMPLETA COM NOMES DOS JOGADORES
-        let message = 'SEM PANELA FC\n\n3 OPCOES DE TIMES\n\n';
+        let message = buildHeader(validOptions.length);
 
-        allTeamOptions.forEach((teamOption, optionIdx) => {
-            if (!teamOption || teamOption.length === 0) return;
-
+        validOptions.forEach((teamOption, optionIdx) => {
             message += `OPCAO ${optionIdx + 1}\n`;
             message += '==================\n';
 
@@ -146,7 +168,7 @@ export function shareAllTeamOptionsOnWhatsApp(allTeamOptions: Player[][][]) {
                 message += '\n';
             });
 
-            if (optionIdx < allTeamOptions.length - 1) {
+            if (optionIdx < validOptions.length - 1) {
                 message += '\n';
             }
         });
@@ -161,11 +183,9 @@ export function shareAllTeamOptionsOnWhatsApp(allTeamOptions: Player[][][]) {
         if (message.length > 1500) {
             console.warn('⚠️ Mensagem muito longa, usando versão resumida...');
 
-            message = 'SEM PANELA FC\n\n3 OPCOES DE TIMES\n\n';
+            message = buildHeader(validOptions.length);
 
-            allTeamOptions.forEach((teamOption, optionIdx) => {
-                if (!teamOption || teamOption.length === 0) return;
-
+            validOptions.forEach((teamOption, optionIdx) => {
                 message += `OPCAO ${optionIdx + 1}\n`;
                 teamOption.forEach((team, teamIdx) => {
                     const teamAvg = team.length > 0 ? (team.reduce((sum, p) => sum + p.rating, 0) / team.length).toFixed(1) : '0';
@@ -276,15 +296,20 @@ export function shareAllTeamOptionsOnWhatsApp(allTeamOptions: Player[][][]) {
         console.log('📋 Tentando fallback: copiar para clipboard...');
 
         try {
-            const fallbackMessage = `SEM PANELA FC - 3 OPCOES DE TIMES
+            /**
+             * Monta o fallback dinamicamente com base em
+             * quantas opções existem de verdade — antes
+             * esse trecho acessava allTeamOptions[0], [1]
+             * e [2] diretamente, o que quebraria (undefined)
+             * se só houvesse 2 opções válidas.
+             */
+            let fallbackMessage = `SEM PANELA FC - ${validOptions.length} OPCOES DE TIMES\n\n`;
 
-OPCAO 1: ${allTeamOptions[0].length} times
-OPCAO 2: ${allTeamOptions[1].length} times  
-OPCAO 3: ${allTeamOptions[2].length} times
+            validOptions.forEach((teamOption, idx) => {
+                fallbackMessage += `OPCAO ${idx + 1}: ${teamOption.length} times\n`;
+            });
 
-Vote na sua opcao preferida!
-
-sem-panela-fc.vercel.app`;
+            fallbackMessage += '\nVote na sua opcao preferida!\n\nsem-panela-fc.vercel.app';
 
             // Tentar copiar para clipboard
             if (navigator.clipboard && navigator.clipboard.writeText) {
